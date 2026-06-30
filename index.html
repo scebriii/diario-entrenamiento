@@ -4,382 +4,231 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Diario de Entrenamiento</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='64' fill='%230071e3'/%3E%3Ctext x='256' y='340' font-size='320' fill='white'%3E⛰%3C/text%3E%3C/svg%3E" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');</script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"SF Pro Display"', '"Helvetica Neue"', 'Arial', 'sans-serif'] },
-          colors: {
-            ios: { bg: '#f2f2f7', card: '#ffffff', sep: '#e5e5ea', label: '#1c1c1e', slabel: '#3a3a3c', tlabel: '#8e8e93', qlabel: '#aeaeb2' },
-            sport: { 400: '#007aff', 500: '#0071e3', 600: '#005bb8' }
-          },
-          borderRadius: { '3xl': '20px', '4xl': '24px' }
-        }
-      }
-    }
-  </script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['-apple-system','BlinkMacSystemFont','"SF Pro Text"','"SF Pro Display"','"Helvetica Neue"','Arial','sans-serif']},colors:{ios:{bg:'#f2f2f7',card:'#ffffff',sep:'#e5e5ea',label:'#1c1c1e',slabel:'#3a3a3c',tlabel:'#8e8e93',qlabel:'#aeaeb2'},sport:{400:'#007aff',500:'#0071e3',600:'#005bb8'}},borderRadius:{'3xl':'20px','4xl':'24px'}}}}</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <style>
-    * { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-    html { scroll-behavior: smooth; }
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #f2f2f7; }
-    ::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 6px; }
-    ::selection { background: rgba(0,113,227,0.15); color: #1c1c1e; }
+    *{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    html{scroll-behavior:smooth}body{background:#f2f2f7;min-height:100vh;color:#1c1c1e;margin:0}
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:#f2f2f7}
+    ::-webkit-scrollbar-thumb{background:#c7c7cc;border-radius:6px}
+    ::selection{background:rgba(0,113,227,0.15)}
 
-    body { background: #f2f2f7; min-height: 100vh; color: #1c1c1e; }
-
-    .ios-card { background: #ffffff; border-radius: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03); border: 1px solid #e5e5ea; }
-    .ios-card-strong { background: #ffffff; border-radius: 24px; box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04); border: 1px solid #e5e5ea; }
-    .ios-inset { background: #f2f2f7; border-radius: 14px; }
-
-    .cal-cell { transition: all 0.15s; cursor: pointer; min-height: 60px; position: relative; border-radius: 12px; }
-    .cal-cell:hover { background: #f2f2f7; }
-    .cal-cell.has-session::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 18px; height: 4px; border-radius: 3px; }
-    .cal-cell.today { background: rgba(0,113,227,0.07); box-shadow: inset 0 0 0 1.5px rgba(0,113,227,0.2); }
-    .cal-cell.today .day-num { color: #0071e3; font-weight: 700; }
-
-    .slide-panel { transition: transform 0.35s cubic-bezier(0.22,1,0.36,1); }
-    .slide-panel.open { transform: translateX(0); }
-
-    .fade-in { animation: fadeSlideIn 0.25s ease both; }
-    @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    .scale-in { animation: scaleIn 0.2s ease both; }
-    @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-
-    .tag-chip { transition: all 0.15s; cursor: pointer; border-radius: 999px; }
-    .tag-chip:hover { background: rgba(0,113,227,0.08); border-color: rgba(0,113,227,0.25); }
-    .tag-chip.active { background: rgba(0,113,227,0.12); border-color: rgba(0,113,227,0.35); color: #0071e3; }
-
-    .type-badge { font-size: 0.63rem; padding: 3px 10px; border-radius: 999px; white-space: nowrap; font-weight: 500; letter-spacing: 0.01em; }
-
-    .stat-card { transition: all 0.2s; border-radius: 20px; }
-    .stat-card:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
-
-    .exercise-row { animation: fadeSlideIn 0.2s ease both; }
-
-    .nav-tab { transition: all 0.2s; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; border-radius: 8px; }
-    .nav-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 8px; right: 8px; height: 3px; background: #0071e3; border-radius: 2px; }
-
-    input, select, textarea { transition: all 0.2s; -webkit-appearance: none; }
-    input:focus, select:focus, textarea:focus { outline: none; }
-
-    .ios-input { background: #f2f2f7; border: 1px solid #e5e5ea; border-radius: 14px; padding: 12px 16px; font-size: 0.875rem; color: #1c1c1e; }
-    .ios-input:focus { border-color: #0071e3; box-shadow: 0 0 0 3px rgba(0,113,227,0.12); }
-    .ios-input::placeholder { color: #aeaeb2; }
-
-    .ios-slider { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 3px; background: #e5e5ea; outline: none; }
-    .ios-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: white; border: 1px solid #d1d1d6; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; }
-    .ios-slider::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; background: white; border: 1px solid #d1d1d6; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; }
-
-    .ios-select { background: #f2f2f7 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center; background-size: 12px; }
-
-    .btn-ios-primary { background: #0071e3; color: white; font-weight: 600; border-radius: 14px; padding: 11px 22px; font-size: 0.8125rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,113,227,0.25); }
-    .btn-ios-primary:hover { background: #005bb8; box-shadow: 0 4px 16px rgba(0,113,227,0.3); }
-    .btn-ios-primary:active { transform: scale(0.97); }
-
-    .btn-ios-secondary { background: rgba(0,0,0,0.04); color: #3a3a3c; font-weight: 500; border-radius: 12px; padding: 9px 16px; font-size: 0.8125rem; transition: all 0.2s; border: 1px solid #e5e5ea; }
-    .btn-ios-secondary:hover { background: rgba(0,0,0,0.07); }
-    .btn-ios-secondary:active { transform: scale(0.97); }
-
-    .nav-blur { background: rgba(255,255,255,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,0,0,0.08); }
-
-    .widget-btn { border-radius: 14px; padding: 8px 14px; font-size: 0.75rem; font-weight: 500; transition: all 0.2s; background: #f2f2f7; border: 1px solid #e5e5ea; color: #3a3a3c; }
-    .widget-btn:hover { background: #e5e5ea; }
-
-    @media (max-width: 640px) {
-      .cal-cell { min-height: 48px; }
-      .cal-cell.has-session::after { width: 14px; height: 3px; }
-    }
+    .ios-card{background:#fff;border-radius:20px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 1px 2px rgba(0,0,0,.03);border:1px solid #e5e5ea}
+    .ios-card-s{border-radius:24px;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.06),0 1px 4px rgba(0,0,0,.04);border:1px solid #e5e5ea}
+    .ios-inset{background:#f2f2f7;border-radius:14px}
+    .cal-cell{transition:all .15s;cursor:pointer;min-height:60px;position:relative;border-radius:12px}
+    .cal-cell:hover{background:#f2f2f7}
+    .cal-cell.has-session::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:18px;height:4px;border-radius:3px}
+    .cal-cell.today{background:rgba(0,113,227,.07);box-shadow:inset 0 0 0 1.5px rgba(0,113,227,.2)}
+    .cal-cell.today .day-num{color:#0071e3;font-weight:700}
+    .fade-in{animation:fadeSlideIn .25s ease both}@keyframes fadeSlideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .scale-in{animation:scaleIn .2s ease both}@keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+    .nav-blur{background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-bottom:1px solid rgba(0,0,0,.08)}
+    .ios-input{background:#f2f2f7;border:1px solid #e5e5ea;border-radius:14px;padding:12px 16px;font-size:.875rem;color:#1c1c1e}
+    .ios-input:focus{border-color:#0071e3;box-shadow:0 0 0 3px rgba(0,113,227,.12)}.ios-input::placeholder{color:#aeaeb2}
+    .ios-slider{-webkit-appearance:none;height:4px;border-radius:3px;background:#e5e5ea;outline:none}
+    .ios-slider::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;border:1px solid #d1d1d6;box-shadow:0 2px 8px rgba(0,0,0,.1);cursor:pointer}
+    .ios-select{background:#f2f2f7 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center;background-size:12px}
+    .btn-p{background:#0071e3;color:#fff;font-weight:600;border-radius:14px;padding:11px 22px;font-size:.8125rem;transition:all .2s;box-shadow:0 2px 8px rgba(0,113,227,.25);border:none;cursor:pointer}
+    .btn-p:hover{background:#005bb8;box-shadow:0 4px 16px rgba(0,113,227,.3)}.btn-p:active{transform:scale(.97)}
+    .btn-s{background:rgba(0,0,0,.04);color:#3a3a3c;font-weight:500;border-radius:12px;padding:9px 16px;font-size:.8125rem;transition:all .2s;border:1px solid #e5e5ea;cursor:pointer}
+    .btn-s:hover{background:rgba(0,0,0,.07)}.btn-s:active{transform:scale(.97)}
+    .type-badge{font-size:.63rem;padding:3px 10px;border-radius:999px;white-space:nowrap;font-weight:500}
+    .slide-panel{transition:transform .35s cubic-bezier(.22,1,.36,1)}.slide-panel.open{transform:translateX(0)}
+    .avatar-btn{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;cursor:pointer;transition:all .2s;border:2px solid transparent}
+    .avatar-btn.active{border-color:#0071e3;background:rgba(0,113,227,.1)}
+    .pain-dot{transition:all .2s;cursor:pointer}.pain-dot:hover{transform:scale(1.3)}
+    @media print{body{background:#fff!important}.no-print{display:none!important}.ios-card{box-shadow:none!important;border:1px solid #ddd!important;break-inside:avoid}}
+    @media(max-width:640px){.cal-cell{min-height:48px}.cal-cell.has-session::after{width:14px;height:3px}}
   </style>
 </head>
 <body>
-
-<nav id="mainNav" class="sticky top-0 z-30 nav-blur">
+<nav class="sticky top-0 z-30 nav-blur no-print">
   <div class="max-w-4xl mx-auto px-4 sm:px-6 flex items-center justify-between h-11">
     <div class="flex items-center gap-2">
-      <span class="text-base font-bold tracking-tight text-[#1c1c1e]">
-        <span>⛰️</span>
-        <span style="background:linear-gradient(135deg,#0071e3,#0095f2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Diario</span>
-        <span style="color:#3a3a3c">Entrenamiento</span>
-      </span>
+      <span class="text-base font-bold tracking-tight"><span>⛰️</span><span style="background:linear-gradient(135deg,#0071e3,#0095f2);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Diario</span><span style="color:#3a3a3c">Entrenamiento</span></span>
     </div>
-    <div class="flex items-center gap-1">
-      <button id="navTabDiary" class="nav-tab active text-[0.75rem] font-semibold text-[#0071e3] px-3 py-1.5">Diario</button>
-      <button id="navTabMeasurements" class="nav-tab text-[0.75rem] font-medium text-[#8e8e93] hover:text-[#3a3a3c] px-3 py-1.5">Mediciones</button>
-      <button id="navTabDashboard" class="nav-tab text-[0.75rem] font-medium text-[#8e8e93] hover:text-[#3a3a3c] px-3 py-1.5">Dashboard</button>
+    <div class="flex items-center gap-2">
+      <button id="navDiary" class="text-[.75rem] font-semibold text-[#0071e3] px-3 py-1.5" style="border-bottom:3px solid #0071e3;border-radius:2px">Diario</button>
+      <button id="navMeas" class="text-[.75rem] font-medium text-[#8e8e93] hover:text-[#3a3a3c] px-3 py-1.5">Mediciones</button>
+      <button id="navDash" class="text-[.75rem] font-medium text-[#8e8e93] hover:text-[#3a3a3c] px-3 py-1.5">Dashboard</button>
+      <div id="profileSelector" class="flex items-center gap-1 ml-1"></div>
     </div>
   </div>
 </nav>
 
 <div id="app" class="max-w-4xl mx-auto px-4 sm:px-6 py-4">
 
-  <!-- DIARY -->
-  <div id="diarySection">
-    <header class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-2">
-        <button id="btnNewSession" class="btn-ios-primary flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-          <span class="hidden sm:inline">Nueva sesión</span>
-        </button>
-        <button id="btnExportCsv" class="btn-ios-secondary flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          <span class="hidden sm:inline">CSV</span>
-        </button>
-      </div>
-      <div class="flex gap-1.5">
-        <button id="btnExportPdf" class="btn-ios-secondary flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-          <span class="hidden sm:inline">PDF mes</span>
-        </button>
-        <button id="btnExportAllPdf" class="btn-ios-secondary flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-          <span class="hidden sm:inline">PDF todo</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- ACWR -->
-    <section id="acwrSection" class="ios-card p-4 mb-4 hidden">
-      <div class="flex items-center justify-between flex-wrap gap-3">
-        <div class="flex items-center gap-3">
-          <svg class="w-5 h-5 text-[#0071e3] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          <div>
-            <div class="text-xs font-semibold text-[#1c1c1e]">Carga aguda : crónica</div>
-            <div class="text-[10px] text-[#8e8e93]">ACWR — prevención de lesiones</div>
-          </div>
-        </div>
-        <div class="flex items-center gap-4">
-          <div class="text-center"><div class="text-[10px] text-[#8e8e93]">Aguda (7d)</div><div id="acwrAcute" class="text-sm font-bold font-mono text-[#1c1c1e]">0</div></div>
-          <div class="text-center"><div class="text-[10px] text-[#8e8e93]">Crónica (28d)</div><div id="acwrChronic" class="text-sm font-bold font-mono text-[#1c1c1e]">0</div></div>
-          <div class="text-center px-3 py-1.5 rounded-xl ios-inset" id="acwrBox">
-            <div class="text-[10px] text-[#8e8e93]">Ratio</div>
-            <div id="acwrRatio" class="text-lg font-extrabold font-mono">—</div>
-          </div>
-        </div>
-      </div>
-      <div class="mt-2 h-1.5 bg-[#e5e5ea] rounded-full overflow-hidden">
-        <div id="acwrBar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:linear-gradient(90deg,#34c759,#ff9500,#ff3b30)"></div>
-      </div>
-      <div class="flex justify-between text-[9px] text-[#aeaeb2] mt-0.5 px-0.5">
-        <span>0.8 seguro</span><span>1.0 óptimo</span><span>1.3 riesgo</span><span>1.5+ peligro</span>
-      </div>
-    </section>
-
-    <!-- CALENDAR -->
-    <section class="ios-card p-4 sm:p-5 mb-4">
-      <div class="flex items-center justify-between mb-3">
-        <button id="prevMonth" class="p-1.5 hover:bg-[#f2f2f7] rounded-xl transition text-[#8e8e93] hover:text-[#0071e3]">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <h2 id="monthTitle" class="text-base sm:text-lg font-bold text-[#1c1c1e] tracking-tight"></h2>
-        <button id="nextMonth" class="p-1.5 hover:bg-[#f2f2f7] rounded-xl transition text-[#8e8e93] hover:text-[#0071e3]">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </button>
-      </div>
-      <div class="grid grid-cols-7 mb-1 text-center text-[10px] font-semibold text-[#8e8e93] uppercase tracking-widest">
-        <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
-      </div>
-      <div id="calendarGrid" class="grid grid-cols-7 gap-0.5"></div>
-      <div id="legendRow" class="flex flex-wrap gap-1.5 mt-3 text-[9px] text-[#8e8e93]"></div>
-    </section>
-
-    <!-- CHARTS -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
-      <section id="chartEvolutionSection" class="ios-card p-4 sm:p-5 hidden">
-        <h3 class="text-xs font-semibold text-[#3a3a3c] mb-2 flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-          Evolución diaria
-        </h3>
-        <div class="relative"><canvas id="evolutionChart"></canvas></div>
-      </section>
-      <section id="chartWeeklySection" class="ios-card p-4 sm:p-5 hidden">
-        <h3 class="text-xs font-semibold text-[#3a3a3c] mb-2 flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-[#34c759]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-          Volumen semanal
-        </h3>
-        <div class="relative"><canvas id="weeklyChart"></canvas></div>
-      </section>
+<!-- PROFILE CREATION OVERLAY -->
+<div id="profileOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center;padding:16px">
+  <div class="ios-card-s max-w-sm w-full p-6 scale-in">
+    <h3 class="text-base font-bold mb-3">👤 Tu perfil</h3>
+    <p class="text-xs text-[#8e8e93] mb-4">Crea tu perfil para empezar a registrar tus entrenamientos.</p>
+    <div class="flex gap-2 mb-3 flex-wrap" id="avatarPicker">
+      <span class="avatar-btn active" data-a="🏃">🏃</span><span class="avatar-btn" data-a="🏋️">🏋️</span><span class="avatar-btn" data-a="🚴">🚴</span><span class="avatar-btn" data-a="🏊">🏊</span><span class="avatar-btn" data-a="🧘">🧘</span><span class="avatar-btn" data-a="⚽">⚽</span><span class="avatar-btn" data-a="🎾">🎾</span><span class="avatar-btn" data-a="🥊">🥊</span>
     </div>
-
-    <!-- SEARCH + FILTER + COMPARISON -->
-    <section class="ios-card p-5 mb-4">
-      <div class="flex flex-wrap items-center gap-2 mb-3">
-        <div class="relative flex-1 min-w-[140px]">
-          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#aeaeb2]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input id="searchNotes" type="text" placeholder="Buscar en notas…" class="ios-input w-full pl-10" />
-        </div>
-        <div id="filterChips" class="flex flex-wrap gap-1"></div>
-        <div class="flex items-center gap-1.5 ml-auto">
-          <span class="text-[10px] text-[#8e8e93]">vs</span>
-          <select id="compareMonth" class="ios-input ios-select py-1.5 pr-8 text-xs">
-            <option value="">—</option>
-          </select>
-        </div>
-      </div>
-      <div id="comparisonBox" class="hidden mb-3">
-        <div class="grid grid-cols-2 gap-2 text-xs">
-          <div class="ios-inset p-3 rounded-xl">
-            <div class="text-[#8e8e93] mb-1 font-medium" id="compCurrentLabel">Este mes</div>
-            <div id="compCurrentContent" class="text-[#1c1c1e] font-mono leading-relaxed"></div>
-          </div>
-          <div class="ios-inset p-3 rounded-xl">
-            <div class="text-[#8e8e93] mb-1 font-medium" id="compOtherLabel">Otro mes</div>
-            <div id="compOtherContent" class="text-[#1c1c1e] font-mono leading-relaxed"></div>
-          </div>
-        </div>
-      </div>
-      <h3 class="text-xs font-semibold text-[#3a3a3c] flex items-center gap-1.5 mb-2">
-        <svg class="w-3.5 h-3.5 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-        Sesiones
-      </h3>
-      <div id="sessionList" class="space-y-1"></div>
-      <div id="emptyMonth" class="hidden text-center py-6 text-[#aeaeb2] text-xs">
-        <svg class="w-8 h-8 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        No hay sesiones registradas este mes
-      </div>
-    </section>
-
-    <!-- STATS -->
-    <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-      <div class="stat-card ios-card p-3 text-center">
-        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-0.5 font-semibold">Sesiones</div>
-        <div id="statSessions" class="text-lg font-bold font-mono text-[#0071e3]">0</div>
-      </div>
-      <div class="stat-card ios-card p-3 text-center">
-        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-0.5 font-semibold">Volumen total</div>
-        <div id="statVolume" class="text-lg font-bold font-mono text-[#0071e3]">0 min</div>
-      </div>
-      <div class="stat-card ios-card p-3 text-center">
-        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-0.5 font-semibold">sRPE total</div>
-        <div id="statSrpe" class="text-lg font-bold font-mono text-[#0071e3]">0</div>
-      </div>
-      <div class="stat-card ios-card p-3 text-center">
-        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-0.5 font-semibold">Racha</div>
-        <div id="statStreak" class="text-lg font-bold font-mono text-[#0071e3]">—</div>
-      </div>
-    </section>
+    <input id="profileNameInput" type="text" placeholder="Tu nombre (ej: Sergio)" class="ios-input w-full mb-3" maxlength="20" />
+    <button id="createProfileBtn" class="btn-p w-full text-sm">Crear perfil</button>
   </div>
+</div>
 
-  <!-- MEASUREMENTS -->
-  <div id="measurementsSection" class="hidden">
-    <header class="flex items-center justify-between mb-4">
-      <h2 class="text-base font-bold text-[#1c1c1e] flex items-center gap-2">
-        <svg class="w-4 h-4 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
-        Mediciones corporales
-      </h2>
-      <button id="btnNewMeasurement" class="btn-ios-primary text-sm px-3 py-1.5">➕ Añadir</button>
-    </header>
-    <section class="ios-card p-5 mb-4">
-      <div class="relative"><canvas id="measurementsChart"></canvas></div>
-    </section>
-    <section class="ios-card p-5">
-      <div id="measurementsList" class="space-y-1"></div>
-      <div id="emptyMeasurements" class="text-center py-6 text-[#aeaeb2] text-xs">
-        <svg class="w-8 h-8 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
-        Aún no hay mediciones registradas
-      </div>
-    </section>
-  </div>
-
-  <!-- DASHBOARD -->
-  <div id="dashboardSection" class="hidden">
-    <h2 class="text-base font-bold text-[#1c1c1e] mb-4 flex items-center gap-2">
-      <svg class="w-4 h-4 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-      Resumen rápido
-    </h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-      <div class="ios-card p-3">
-        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-1 font-semibold">Esta semana</div>
-        <div id="dashWeeklySessions" class="text-lg font-bold font-mono text-[#0071e3]">0</div>
-        <div id="dashWeeklyVolume" class="text-[11px] text-[#3a3a3c] font-mono">0 min</div>
-      </div>
-      <div class="ios-card p-3">
-        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-1 font-semibold">Objetivo semanal</div>
-        <div class="flex items-end gap-2">
-          <div id="dashGoalValue" class="text-lg font-bold font-mono text-[#0071e3]">—</div>
-          <div id="dashGoalPercent" class="text-[11px] text-[#8e8e93] mb-0.5">0%</div>
-        </div>
-        <div class="mt-1.5 h-1.5 bg-[#f2f2f7] rounded-full overflow-hidden">
-          <div id="dashGoalBar" class="h-full rounded-full" style="width:0%;background:linear-gradient(90deg,#0095f2,#0071e3)"></div>
-        </div>
-      </div>
-      <div class="ios-card p-3">
-        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-1 font-semibold">Último descanso</div>
-        <div id="dashRestDays" class="text-lg font-bold font-mono text-[#0071e3]">—</div>
-        <div id="dashRestLabel" class="text-[11px] text-[#3a3a3c]">hace — días</div>
-      </div>
-      <div class="ios-card p-3">
-        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-1 font-semibold">Volumen total</div>
-        <div id="dashTotalVolume" class="text-lg font-bold font-mono text-[#0071e3]">0 min</div>
-        <div id="dashTotalSessions" class="text-[11px] text-[#3a3a3c] font-mono">0 sesiones</div>
-      </div>
+<!-- DIARY -->
+<div id="diarySection">
+  <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+    <div class="flex items-center gap-2">
+      <button id="btnNewSession" class="btn-p flex items-center gap-1.5 text-sm"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg><span class="hidden sm:inline">Nueva</span></button>
+      <button id="btnPrint" class="btn-s flex items-center gap-1.5" onclick="window.print()"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg></button>
     </div>
-    <section class="ios-card p-5">
-      <h3 class="text-xs font-semibold text-[#3a3a3c] mb-2 flex items-center gap-1.5">
-        <svg class="w-3.5 h-3.5 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        Desglose por tipo
-      </h3>
-      <div id="dashTypeBreakdown" class="space-y-1.5"></div>
-    </section>
+    <div class="flex gap-1.5 flex-wrap">
+      <button id="btnExportCsv" class="btn-s text-xs">CSV</button>
+      <button id="btnExportPdf" class="btn-s text-xs">PDF mes</button>
+      <button id="btnExportAllPdf" class="btn-s text-xs">PDF todo</button>
+    </div>
   </div>
+
+  <!-- ACWR -->
+  <section id="acwrSection" class="ios-card p-4 mb-4 hidden">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-3"><svg class="w-5 h-5 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg><div><div class="text-xs font-semibold">Carga aguda : crónica</div><div class="text-[10px] text-[#8e8e93]">ACWR</div></div></div>
+      <div class="flex items-center gap-4"><div class="text-center"><div class="text-[10px] text-[#8e8e93]">Aguda (7d)</div><div id="acwrAcute" class="text-sm font-bold font-mono text-[#1c1c1e]">0</div></div><div class="text-center"><div class="text-[10px] text-[#8e8e93]">Crónica (28d)</div><div id="acwrChronic" class="text-sm font-bold font-mono text-[#1c1c1e]">0</div></div><div class="text-center px-3 py-1.5 rounded-xl ios-inset" id="acwrBox"><div class="text-[10px] text-[#8e8e93]">Ratio</div><div id="acwrRatio" class="text-lg font-extrabold font-mono">—</div></div></div>
+    </div>
+    <div class="mt-2 h-1.5 bg-[#e5e5ea] rounded-full overflow-hidden"><div id="acwrBar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:linear-gradient(90deg,#34c759,#ff9500,#ff3b30)"></div></div>
+    <div class="flex justify-between text-[9px] text-[#aeaeb2] mt-0.5 px-0.5"><span>0.8 seguro</span><span>1.0 óptimo</span><span>1.3 riesgo</span><span>1.5+ peligro</span></div>
+  </section>
+
+  <!-- CALENDAR -->
+  <section class="ios-card p-4 sm:p-5 mb-4">
+    <div class="flex items-center justify-between mb-3">
+      <button id="prevMonth" class="p-1.5 hover:bg-[#f2f2f7] rounded-xl transition text-[#8e8e93] hover:text-[#0071e3]"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+      <h2 id="monthTitle" class="text-base sm:text-lg font-bold tracking-tight"></h2>
+      <button id="nextMonth" class="p-1.5 hover:bg-[#f2f2f7] rounded-xl transition text-[#8e8e93] hover:text-[#0071e3]"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+    <div class="grid grid-cols-7 mb-1 text-center text-[10px] font-semibold text-[#8e8e93] uppercase tracking-widest"><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div></div>
+    <div id="calendarGrid" class="grid grid-cols-7 gap-0.5"></div>
+    <div id="legendRow" class="flex flex-wrap gap-1.5 mt-3 text-[9px] text-[#8e8e93]"></div>
+  </section>
+
+  <!-- CHARTS -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
+    <section id="chartEvolutionSection" class="ios-card p-4 sm:p-5 hidden"><h3 class="text-xs font-semibold text-[#3a3a3c] mb-2 flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Evolución diaria</h3><div class="relative"><canvas id="evolutionChart"></canvas></div></section>
+    <section id="chartWeeklySection" class="ios-card p-4 sm:p-5 hidden"><h3 class="text-xs font-semibold text-[#3a3a3c] mb-2 flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-[#34c759]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Volumen semanal <span class="text-[9px] text-[#aeaeb2] font-normal ml-1">(con tendencia)</span></h3><div class="relative"><canvas id="weeklyChart"></canvas></div></section>
+  </div>
+
+  <!-- WELLNESS CARD -->
+  <section id="wellnessCard" class="ios-card p-4 mb-4 hidden">
+    <div class="flex items-center justify-between mb-2"><h3 class="text-xs font-semibold text-[#3a3a3c] flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>Bienestar diario (Hooper Index)</h3><button id="btnWellness" class="btn-s text-xs">Registrar hoy</button></div>
+    <div id="wellnessContent" class="text-xs text-[#8e8e93]"></div>
+  </section>
+
+  <!-- SEARCH + FILTER -->
+  <section class="ios-card p-5 mb-4">
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <div class="relative flex-1 min-w-[140px]"><svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#aeaeb2]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input id="searchNotes" type="text" placeholder="Buscar en notas…" class="ios-input w-full pl-10" /></div>
+      <div id="filterChips" class="flex flex-wrap gap-1"></div>
+      <div class="flex items-center gap-1.5 ml-auto"><span class="text-[10px] text-[#8e8e93]">vs</span><select id="compareMonth" class="ios-input ios-select py-1.5 pr-8 text-xs"><option value="">—</option></select></div>
+    </div>
+    <div id="comparisonBox" class="hidden mb-3"><div class="grid grid-cols-2 gap-2 text-xs"><div class="ios-inset p-3 rounded-xl"><div class="text-[#8e8e93] mb-1 font-medium" id="compCurrentLabel">Este mes</div><div id="compCurrentContent" class="font-mono leading-relaxed"></div></div><div class="ios-inset p-3 rounded-xl"><div class="text-[#8e8e93] mb-1 font-medium" id="compOtherLabel">Otro mes</div><div id="compOtherContent" class="font-mono leading-relaxed"></div></div></div></div>
+    <div class="flex items-center justify-between mb-2 flex-wrap gap-1"><h3 class="text-xs font-semibold text-[#3a3a3c] flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>Sesiones</h3></div>
+    <div id="sessionList" class="space-y-1"></div>
+    <div id="emptyMonth" class="hidden text-center py-6 text-[#aeaeb2] text-xs"><svg class="w-8 h-8 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>No hay sesiones este mes</div>
+  </section>
+
+  <!-- MESOCYCLE -->
+  <section id="mesoSection" class="ios-card p-4 mb-4 hidden">
+    <div class="flex items-center justify-between mb-2"><h3 class="text-xs font-semibold text-[#3a3a3c] flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Mesociclo activo</h3><button id="btnMeso" class="btn-s text-xs">Planificar</button></div>
+    <div id="mesoContent" class="text-xs text-[#8e8e93]"></div>
+  </section>
+
+  <!-- STATS -->
+  <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+    <div class="ios-card p-3 text-center"><div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-0.5 font-semibold">Sesiones</div><div id="statSessions" class="text-lg font-bold font-mono text-[#0071e3]">0</div></div>
+    <div class="ios-card p-3 text-center"><div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-0.5 font-semibold">Vol total</div><div id="statVolume" class="text-lg font-bold font-mono text-[#0071e3]">0 min</div></div>
+    <div class="ios-card p-3 text-center"><div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-0.5 font-semibold">sRPE total</div><div id="statSrpe" class="text-lg font-bold font-mono text-[#0071e3]">0</div></div>
+    <div class="ios-card p-3 text-center"><div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-0.5 font-semibold">Racha</div><div id="statStreak" class="text-lg font-bold font-mono text-[#0071e3]">—</div></div>
+  </section>
+</div>
+
+<!-- MEASUREMENTS -->
+<div id="measSection" style="display:none">
+  <div class="flex items-center justify-between mb-4"><h2 class="text-base font-bold flex items-center gap-2"><svg class="w-4 h-4 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>Mediciones</h2><button id="btnNewMeasurement" class="btn-p text-sm px-3 py-1.5">➕ Añadir</button></div>
+  <section class="ios-card p-5 mb-4"><div class="relative"><canvas id="measurementsChart"></canvas></div></section>
+  <section class="ios-card p-5"><div id="measurementsList" class="space-y-1"></div><div id="emptyMeasurements" class="text-center py-6 text-[#aeaeb2] text-xs"><svg class="w-8 h-8 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>Aún no hay mediciones</div></section>
+  <!-- 1RM PROGRESSION -->
+  <section id="rmSection" class="ios-card p-5 mb-4 hidden"><h3 class="text-xs font-semibold text-[#3a3a3c] mb-2 flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>Evolución 1RM estimado</h3><div class="relative"><canvas id="rmChart"></canvas></div></section>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashSection" style="display:none">
+  <h2 class="text-base font-bold mb-4 flex items-center gap-2"><svg class="w-4 h-4 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>Dashboard</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+    <div class="ios-card p-3"><div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-1 font-semibold">Esta semana</div><div id="dashWeeklySessions" class="text-lg font-bold font-mono text-[#0071e3]">0</div><div id="dashWeeklyVolume" class="text-[11px] text-[#3a3a3c] font-mono">0 min</div></div>
+    <div class="ios-card p-3"><div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-1 font-semibold">Objetivo semanal</div><div class="flex items-end gap-2"><div id="dashGoalValue" class="text-lg font-bold font-mono text-[#0071e3]">—</div><div id="dashGoalPercent" class="text-[11px] text-[#8e8e93] mb-0.5">0%</div></div><div class="mt-1.5 h-1.5 bg-[#f2f2f7] rounded-full overflow-hidden"><div id="dashGoalBar" class="h-full rounded-full" style="width:0%;background:linear-gradient(90deg,#0095f2,#0071e3)"></div></div></div>
+    <div class="ios-card p-3"><div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-1 font-semibold">Último descanso</div><div id="dashRestDays" class="text-lg font-bold font-mono text-[#0071e3]">—</div><div id="dashRestLabel" class="text-[11px] text-[#3a3a3c]">hace — días</div></div>
+    <div class="ios-card p-3"><div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-1 font-semibold">Volumen total</div><div id="dashTotalVolume" class="text-lg font-bold font-mono text-[#0071e3]">0 min</div><div id="dashTotalSessions" class="text-[11px] text-[#3a3a3c] font-mono">0 sesiones</div></div>
+  </div>
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
+    <section class="ios-card p-5"><h3 class="text-xs font-semibold text-[#3a3a3c] mb-2 flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Desglose por tipo</h3><div id="dashTypeBreakdown" class="space-y-1.5"></div></section>
+    <section class="ios-card p-5"><h3 class="text-xs font-semibold text-[#3a3a3c] mb-2 flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>Wellness semanal</h3><div id="dashWellness" class="text-xs text-[#8e8e93]"></div></section>
+  </div>
+  <section class="ios-card p-5"><h3 class="text-xs font-semibold text-[#3a3a3c] mb-2 flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Adherencia al mesociclo</h3><div id="dashAdherence" class="text-xs text-[#8e8e93]"></div></section>
+</div>
 </div>
 
 <!-- SIDE PANEL -->
-<div id="panelOverlay" class="fixed inset-0 bg-black/30 z-40 hidden transition-opacity" onclick="closePanel()"></div>
-<div id="sidePanel" class="slide-panel fixed top-0 right-0 h-full w-full sm:w-[440px] bg-white z-50 overflow-y-auto transform translate-x-full shadow-xl" style="border-left:1px solid #e5e5ea;border-radius:24px 0 0 24px">
-  <div class="p-5 sm:p-6">
-    <div class="flex items-center justify-between mb-4">
-      <h3 id="panelTitle" class="text-sm font-bold text-[#1c1c1e]"></h3>
-      <button onclick="closePanel()" class="p-1.5 hover:bg-[#f2f2f7] rounded-xl text-[#8e8e93] hover:text-[#1c1c1e] transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div id="panelBody"></div>
-  </div>
-</div>
+<div id="panelOverlay" class="fixed inset-0 bg-black/30 z-40 hidden" onclick="closePanel()"></div>
+<div id="sidePanel" class="slide-panel fixed top-0 right-0 h-full w-full sm:w-[460px] bg-white z-50 overflow-y-auto transform translate-x-full shadow-xl" style="border-left:1px solid #e5e5ea;border-radius:24px 0 0 24px"><div class="p-5 sm:p-6"><div class="flex items-center justify-between mb-4"><h3 id="panelTitle" class="text-sm font-bold"></h3><button onclick="closePanel()" class="p-1.5 hover:bg-[#f2f2f7] rounded-xl text-[#8e8e93] transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button></div><div id="panelBody"></div></div></div>
 
 <!-- CONFIRM MODAL -->
-<div id="confirmOverlay" class="fixed inset-0 bg-black/40 z-50 hidden transition-opacity flex items-center justify-center p-4">
-  <div class="ios-card-strong max-w-sm w-full p-6 shadow-2xl scale-in">
-    <div class="flex items-center gap-3 mb-3">
-      <div class="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
-        <svg class="w-4.5 h-4.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
-      </div>
-      <div><h4 class="text-sm font-bold text-[#1c1c1e]">Eliminar sesión</h4><p class="text-xs text-[#8e8e93]">Esta acción no se puede deshacer.</p></div>
-    </div>
-    <div class="flex gap-2 justify-end mt-4">
-      <button id="confirmCancel" class="px-5 py-2 bg-[#f2f2f7] hover:bg-[#e5e5ea] text-[#3a3a3c] font-medium rounded-xl text-xs transition">Cancelar</button>
-      <button id="confirmDelete" class="px-5 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">🗑️ Eliminar</button>
-    </div>
-  </div>
-</div>
+<div id="confirmOverlay" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+  <div class="ios-card-s max-w-sm w-full p-6 scale-in"><div class="flex items-center gap-3 mb-3"><div class="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0"><svg class="w-4.5 h-4.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg></div><div><h4 class="text-sm font-bold">Eliminar sesión</h4><p class="text-xs text-[#8e8e93]">Esta acción no se puede deshacer.</p></div></div>
+    <div class="flex gap-2 justify-end mt-4"><button id="confirmCancel" class="px-5 py-2 bg-[#f2f2f7] hover:bg-[#e5e5ea] text-[#3a3a3c] font-medium rounded-xl text-xs transition">Cancelar</button><button id="confirmDelete" class="px-5 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">🗑️ Eliminar</button></div></div></div>
 
-<!-- MEASUREMENT FORM MODAL -->
-<div id="measOverlay" class="fixed inset-0 bg-black/40 z-50 hidden transition-opacity flex items-center justify-center p-4">
-  <div class="ios-card-strong max-w-md w-full p-6 shadow-2xl scale-in">
-    <div class="flex items-center justify-between mb-4">
-      <h4 class="text-sm font-bold text-[#1c1c1e]">Nueva medición</h4>
-      <button onclick="closeMeasForm()" class="p-1 hover:bg-[#f2f2f7] rounded-xl text-[#8e8e93] transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
-    </div>
-    <form id="measForm" class="space-y-3">
-      <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">Fecha</label><input type="date" name="mdate" class="ios-input w-full" required /></div>
-      <div class="grid grid-cols-3 gap-2">
-        <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">Peso (kg)</label><input type="number" name="weight" step="0.1" placeholder="75.5" class="ios-input w-full" required /></div>
-        <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">% Grasa</label><input type="number" name="bodyFat" step="0.1" placeholder="12.5" class="ios-input w-full" /></div>
-        <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">Cintura (cm)</label><input type="number" name="waist" step="0.5" placeholder="82" class="ios-input w-full" /></div>
+<!-- MEASUREMENT FORM -->
+<div id="measOverlay" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+  <div class="ios-card-s max-w-md w-full p-6 scale-in"><div class="flex items-center justify-between mb-4"><h4 class="text-sm font-bold">Nueva medición</h4><button onclick="closeMeasForm()" class="p-1 hover:bg-[#f2f2f7] rounded-xl text-[#8e8e93] transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+    <form id="measForm" class="space-y-3"><div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">Fecha</label><input type="date" name="mdate" class="ios-input w-full" required /></div><div class="grid grid-cols-3 gap-2"><div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">Peso (kg)</label><input type="number" name="weight" step="0.1" placeholder="75.5" class="ios-input w-full" required /></div><div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">% Grasa</label><input type="number" name="bodyFat" step="0.1" placeholder="12.5" class="ios-input w-full" /></div><div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">Cintura (cm)</label><input type="number" name="waist" step="0.5" placeholder="82" class="ios-input w-full" /></div></div><button type="submit" class="btn-p w-full text-sm">Guardar</button></form></div></div>
+
+<!-- MESOCYCLE MODAL -->
+<div id="mesoOverlay" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+  <div class="ios-card-s max-w-md w-full p-6 scale-in"><div class="flex items-center justify-between mb-4"><h4 class="text-sm font-bold">Planificar mesociclo</h4><button onclick="closeMesoForm()" class="p-1 hover:bg-[#f2f2f7] rounded-xl text-[#8e8e93] transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+    <form id="mesoForm" class="space-y-3">
+      <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">Nombre del bloque</label><input type="text" name="name" placeholder="Ej: Hipertrofia" class="ios-input w-full" required /></div>
+      <div class="grid grid-cols-2 gap-2"><div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">Inicio</label><input type="date" name="start" class="ios-input w-full" required /></div><div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">Fin</label><input type="date" name="end" class="ios-input w-full" required /></div></div>
+      <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">Objetivo semanal (min)</label><input type="number" name="goal" placeholder="300" class="ios-input w-full" /></div>
+      <div class="flex gap-2"><button type="submit" class="btn-p flex-1 text-sm">Guardar</button><button type="button" id="btnDeleteMeso" class="btn-s text-sm" style="color:#ef4444">Eliminar</button></div>
+    </form></div></div>
+
+<!-- WELLNESS MODAL -->
+<div id="wellnessOverlay" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+  <div class="ios-card-s max-w-sm w-full p-6 scale-in">
+    <div class="flex items-center justify-between mb-3"><h4 class="text-sm font-bold">🧘 Bienestar de hoy</h4><button onclick="closeWellnessForm()" class="p-1 hover:bg-[#f2f2f7] rounded-xl text-[#8e8e93] transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+    <form id="wellnessForm" class="space-y-2">
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="text-[10px] text-[#8e8e93]">Sueño <span class="text-[#aeaeb2]">(1-7)</span></label><input type="range" name="sleep" min="1" max="7" value="4" class="ios-slider w-full" oninput="this.nextElementSibling.textContent=this.value" /><span class="text-xs font-mono text-[#0071e3] ml-1">4</span></div>
+        <div><label class="text-[10px] text-[#8e8e93]">Nutrición <span class="text-[#aeaeb2]">(1-7)</span></label><input type="range" name="nutrition" min="1" max="7" value="4" class="ios-slider w-full" oninput="this.nextElementSibling.textContent=this.value" /><span class="text-xs font-mono text-[#0071e3] ml-1">4</span></div>
+        <div><label class="text-[10px] text-[#8e8e93]">Estrés <span class="text-[#aeaeb2]">(1-7)</span><span class="text-[9px] text-[#aeaeb2] ml-1">(invertido)</span></label><input type="range" name="stress" min="1" max="7" value="4" class="ios-slider w-full" oninput="this.nextElementSibling.textContent=this.value" /><span class="text-xs font-mono text-[#0071e3] ml-1">4</span></div>
+        <div><label class="text-[10px] text-[#8e8e93]">Fatiga <span class="text-[#aeaeb2]">(1-7)</span><span class="text-[9px] text-[#aeaeb2] ml-1">(invertido)</span></label><input type="range" name="fatigue" min="1" max="7" value="4" class="ios-slider w-full" oninput="this.nextElementSibling.textContent=this.value" /><span class="text-xs font-mono text-[#0071e3] ml-1">4</span></div>
       </div>
-      <button type="submit" class="btn-ios-primary w-full text-sm">Guardar</button>
+      <div><label class="text-[10px] text-[#8e8e93]">Dolor muscular (toca las zonas)</label><div id="painMap" class="flex justify-center gap-4 mt-1"></div></div>
+      <button type="submit" class="btn-p w-full text-sm mt-1">Guardar</button>
     </form>
   </div>
 </div>
 
 <script>
-const SESSION_KEY='diario_entrenamiento_sessions',MEAS_KEY='diario_entrenamiento_measurements',GOAL_KEY='diario_entrenamiento_goal';
+// ═══════════════════════════════════════════════ DATA
+const PROF_KEY='diario_profiles',ACTIVE_KEY='diario_active_profile';
+const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAYS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const TIPOS=[
   {id:'fuerza',label:'Fuerza',color:'#ef4444',badge:'bg-red-50 text-red-500 border-red-200'},
   {id:'cardio',label:'Resistencia / Cardio',color:'#3b82f6',badge:'bg-blue-50 text-blue-500 border-blue-200'},
@@ -389,58 +238,112 @@ const TIPOS=[
   {id:'partido',label:'Partido / Competición',color:'#0071e3',badge:'bg-blue-50 text-blue-600 border-blue-200'},
   {id:'recuperacion',label:'Recuperación activa',color:'#8e8e93',badge:'bg-gray-50 text-gray-500 border-gray-200'},
 ];
-const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const DAYS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-let sessions=[],measurements=[],weeklyGoal=300,currentYear,currentMonth,editingId=null,filterTipo=null,filterTag=null;
-let chartInstance=null,weeklyChartInstance=null,measChartInstance=null,pendingDeleteId=null;
+const ZONES=['z1','z2','z3','z4','z5'];const ZLABELS=['Z1','Z2','Z3','Z4','Z5'];
+const BODY_PARTS=[{id:'neck',label:'Cuello',x:50,y:6},{id:'lshoulder',label:'Hombro izq',x:35,y:13},{id:'rshoulder',label:'Hombro der',x:65,y:13},{id:'chest',label:'Pecho',x:50,y:20},{id:'larm',label:'Brazo izq',x:30,y:22},{id:'rarm',label:'Brazo der',x:70,y:22},{id:'lforearm',label:'Antebrazo izq',x:32,y:30},{id:'rforearm',label:'Antebrazo der',x:68,y:30},{id:'abs',label:'Abdomen',x:50,y:32},{id:'lquad',label:'Cuádriceps izq',x:38,y:45},{id:'rquad',label:'Cuádriceps der',x:62,y:45},{id:'lhamstring',label:'Isquio izq',x:38,y:58},{id:'rhamstring',label:'Isquio der',x:62,y:58},{id:'lcalve',label:'Gemelo izq',x:40,y:70},{id:'rcalve',label:'Gemelo der',x:60,y:70}];
 
-function loadData(){try{sessions=JSON.parse(localStorage.getItem(SESSION_KEY))||[]}catch{sessions=[]}try{measurements=JSON.parse(localStorage.getItem(MEAS_KEY))||[]}catch{measurements=[]}weeklyGoal=parseInt(localStorage.getItem(GOAL_KEY))||300}
-function saveSessions(){localStorage.setItem(SESSION_KEY,JSON.stringify(sessions))}
-function saveMeasurements(){localStorage.setItem(MEAS_KEY,JSON.stringify(measurements))}
-function saveGoal(g){weeklyGoal=g;localStorage.setItem(GOAL_KEY,String(g))}
+let profiles=[],activeProfile=null,sessions=[],measurements=[],wellness=[],templates=[],mesocycles=[],weeklyGoal=300;
+let currentYear,currentMonth,editingId=null,filterTipo=null,filterTag=null;
+let chartInstance=null,weeklyChartInstance=null,measChartInstance=null,rmChartInstance=null,pendingDeleteId=null;
+
+function LS(k){return 'd_'+activeProfile.id+'_'+k}
+function loadData(){
+  try{profiles=JSON.parse(localStorage.getItem(PROF_KEY))||[]}catch{profiles=[]}
+  let aid=localStorage.getItem(ACTIVE_KEY);
+  activeProfile=profiles.find(p=>p.id===aid)||null;
+  if(!activeProfile&&profiles.length){activeProfile=profiles[0];localStorage.setItem(ACTIVE_KEY,activeProfile.id)}
+  if(!activeProfile)return;
+  try{sessions=JSON.parse(localStorage.getItem(LS('s')))||[]}catch{sessions=[]}
+  try{measurements=JSON.parse(localStorage.getItem(LS('m')))||[]}catch{measurements=[]}
+  try{wellness=JSON.parse(localStorage.getItem(LS('w')))||[]}catch{wellness=[]}
+  try{templates=JSON.parse(localStorage.getItem(LS('t')))||[]}catch{templates=[]}
+  try{mesocycles=JSON.parse(localStorage.getItem(LS('mc')))||[]}catch{mesocycles=[]}
+  weeklyGoal=parseInt(localStorage.getItem(LS('g')))||300;
+}
+function saveProfiles(){localStorage.setItem(PROF_KEY,JSON.stringify(profiles));localStorage.setItem(ACTIVE_KEY,activeProfile?activeProfile.id:'')}
+function saveSessions(){localStorage.setItem(LS('s'),JSON.stringify(sessions))}
+function saveMeasurements(){localStorage.setItem(LS('m'),JSON.stringify(measurements))}
+function saveWellness(){localStorage.setItem(LS('w'),JSON.stringify(wellness))}
+function saveTemplates(){localStorage.setItem(LS('t'),JSON.stringify(templates))}
+function saveMesocycles(){localStorage.setItem(LS('mc'),JSON.stringify(mesocycles))}
+function saveGoal(g){weeklyGoal=g;localStorage.setItem(LS('g'),String(g))}
+
 function getTipo(id){return TIPOS.find(t=>t.id===id)||TIPOS[0]}
 function fmt(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+dd}
-function parseDate(str){const[y,m,d]=str.split('-').map(Number);return new Date(y,m-1,d)}
+function parseDate(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
 function todayStr(){return fmt(new Date())}
 function srpe(s){return(parseInt(s.volume)||0)*(parseInt(s.intensity)||0)}
-function sessionsForMonth(y,m){const p=y+'-'+String(m+1).padStart(2,'0');return sessions.filter(s=>s.date.startsWith(p))}
-function escapeHtml(str){const d=document.createElement('div');d.textContent=str;return d.innerHTML}
-function getAllTags(){const t=new Set();sessions.forEach(s=>{(s.tags||[]).forEach(tg=>t.add(tg))});return[...t].sort()}
-function getStats(arr){const c=arr.length,v=arr.reduce((a,s)=>a+(parseInt(s.volume)||0),0),sr=arr.reduce((a,s)=>a+srpe(s),0),ai=c?(arr.reduce((a,s)=>a+(parseInt(s.intensity)||0),0)/c):0;return{count:c,vol:v,srpe:sr,avgInt:ai.toFixed(1)}}
-function nthWeekMonday(d){const dd=new Date(d);dd.setDate(dd.getDate()-(dd.getDay()+6)%7);dd.setHours(0,0,0,0);return dd}
-function weeklyTotals(n){const t=new Date();t.setHours(0,0,0,0);const ew=nthWeekMonday(t);ew.setDate(ew.getDate()+7);const wks=[];for(let i=0;i<n;i++){const we=new Date(ew);we.setDate(we.getDate()-i*7);const ws=new Date(we);ws.setDate(ws.getDate()-7);wks.unshift({start:ws,end:we,label:ws.toLocaleDateString('es-ES',{day:'numeric',month:'short'}),vol:0,srpe:0,count:0})}
-  sessions.forEach(s=>{const sd=parseDate(s.date),vol=parseInt(s.volume)||0;wks.forEach(w=>{if(sd>=w.start&&sd<w.end){w.vol+=vol;w.srpe+=srpe(s);w.count++}})});return wks}
+function sfM(y,m){const p=y+'-'+String(m+1).padStart(2,'0');return sessions.filter(s=>s.date.startsWith(p))}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function allTags(){const t=new Set();sessions.forEach(s=>{(s.tags||[]).forEach(tg=>t.add(tg))});return[...t].sort()}
+function gStats(a){const c=a.length,v=a.reduce((x,s)=>x+(parseInt(s.volume)||0),0),sr=a.reduce((x,s)=>x+srpe(s),0),ai=c?(a.reduce((x,s)=>x+(parseInt(s.intensity)||0),0)/c):0;return{count:c,vol:v,srpe:sr,avgInt:ai.toFixed(1)}}
+function nWM(d){const dd=new Date(d);dd.setDate(dd.getDate()-(dd.getDay()+6)%7);dd.setHours(0,0,0,0);return dd}
+function wTotals(n){const t=new Date();t.setHours(0,0,0,0);const ew=nWM(t);ew.setDate(ew.getDate()+7);const wks=[];for(let i=0;i<n;i++){const we=new Date(ew);we.setDate(we.getDate()-i*7);const ws=new Date(we);ws.setDate(ws.getDate()-7);wks.unshift({start:ws,end:we,label:ws.toLocaleDateString('es-ES',{day:'numeric',month:'short'}),vol:0,srpe:0,count:0})}
+  sessions.forEach(s=>{const sd=parseDate(s.date),v=parseInt(s.volume)||0;wks.forEach(w=>{if(sd>=w.start&&sd<w.end){w.vol+=v;w.srpe+=srpe(s);w.count++}})});return wks}
 function calcAcwr(){const t=new Date();t.setHours(23,59,59,0);const sa=new Date(t);sa.setDate(sa.getDate()-7);const ca=new Date(t);ca.setDate(ca.getDate()-28);let ac=0,cd=0;
   sessions.forEach(s=>{const sd=parseDate(s.date),l=srpe(s);if(sd>=sa&&sd<=t)ac+=l;if(sd>=ca&&sd<=t)cd+=l});const ch=(cd/28)*7;const r=ch>0?+(ac/ch).toFixed(2):0;return{acute:ac,chronic:Math.round(ch),ratio:r}}
-function renderAcwr(){const sec=document.getElementById('acwrSection'),a=calcAcwr();if(sessions.length<7){sec.classList.add('hidden');return}sec.classList.remove('hidden');
+
+// ═══════════════════════════════════════════════ PROFILE
+function renderProfiles(){
+  const el=document.getElementById('profileSelector');if(!activeProfile){el.innerHTML='<button class="btn-s text-xs" onclick="showProfileCreate()">+ Perfil</button>';return}
+  let h='';profiles.forEach(p=>{h+=`<span class="avatar-btn ${p.id===activeProfile.id?'active':''}" onclick="switchProfile('${p.id}')" title="${p.name}">${p.avatar}</span>`});h+=`<button class="btn-s text-xs px-2 py-1" onclick="showProfileCreate()" title="Añadir perfil">+</button>`;
+  if(profiles.length>1)h+=`<button class="text-[#aeaeb2] hover:text-red-500 text-xs px-1" onclick="deleteProfile()" title="Eliminar perfil">✕</button>`;
+  el.innerHTML=h;
+}
+function showProfileCreate(){document.getElementById('profileOverlay').style.display='flex';document.getElementById('profileNameInput').value='';document.getElementById('profileNameInput').focus()}
+function hideProfileCreate(){document.getElementById('profileOverlay').style.display='none'}
+function switchProfile(id){
+  activeProfile=profiles.find(p=>p.id===id);if(!activeProfile)return;
+  localStorage.setItem(ACTIVE_KEY,id);loadData();renderProfiles();fullRender()
+}
+function deleteProfile(){
+  if(!activeProfile||!confirm('Eliminar perfil "'+activeProfile.name+'" y todos sus datos?'))return;
+  const id=activeProfile.id;
+  ['s','m','w','t','mc','g'].forEach(k=>localStorage.removeItem('d_'+id+'_'+k));
+  profiles=profiles.filter(p=>p.id!==id);saveProfiles();
+  activeProfile=profiles.length?profiles[0]:null;if(activeProfile)localStorage.setItem(ACTIVE_KEY,activeProfile.id);
+  if(!activeProfile){profiles=[];saveProfiles();showProfileCreate()}else loadData()
+  renderProfiles();fullRender()
+}
+
+// ═══════════════════════════════════════════════ ACWR
+function renderAcwr(){
+  const sec=document.getElementById('acwrSection'),a=calcAcwr();
+  if(sessions.length<7){sec.classList.add('hidden');return}sec.classList.remove('hidden');
   document.getElementById('acwrAcute').textContent=a.acute+' UA';document.getElementById('acwrChronic').textContent=a.chronic+' UA';
   const r=a.ratio,el=document.getElementById('acwrRatio'),box=document.getElementById('acwrBox');
   if(r===0){el.textContent='—';box.className='text-center px-3 py-1.5 rounded-xl ios-inset';return}
   el.textContent=r.toFixed(2);let p=Math.min((r/2)*100,100);if(p<5)p=5;document.getElementById('acwrBar').style.width=p+'%';
   let c;if(r<0.8)c='bg-yellow-50 text-yellow-600';else if(r<=1.3)c='bg-green-50 text-green-600';else if(r<=1.5)c='bg-orange-50 text-orange-600';else c='bg-red-50 text-red-600';
-  box.className='text-center px-3 py-1.5 rounded-xl '+c;}
-function renderCalendar(){const g=document.getElementById('calendarGrid'),t=document.getElementById('monthTitle');t.textContent=MONTHS[currentMonth]+' '+currentYear;
+  box.className='text-center px-3 py-1.5 rounded-xl '+c;
+}
+
+// ═══════════════════════════════════════════════ CALENDAR
+function renderCalendar(){
+  const g=document.getElementById('calendarGrid'),t=document.getElementById('monthTitle');t.textContent=MONTHS[currentMonth]+' '+currentYear;
   const fd=new Date(currentYear,currentMonth,1);let sd=fd.getDay();sd=sd===0?6:sd-1;
-  const dim=new Date(currentYear,currentMonth+1,0).getDate(),ms=sessionsForMonth(currentYear,currentMonth),tod=todayStr();
+  const dim=new Date(currentYear,currentMonth+1,0).getDate(),ms=sfM(currentYear,currentMonth),tod=todayStr();
   const dm={};ms.forEach(s=>{const d=parseInt(s.date.split('-')[2],10);if(!dm[d])dm[d]=[];dm[d].push(s)});
   let h='';for(let i=0;i<sd;i++)h+='<div class="cal-cell bg-transparent"></div>';
-  for(let d=1;d<=dim;d++){const ds=fmt(new Date(currentYear,currentMonth,d));const ss=dm[d]||[],hs=ss.length>0,fc=hs?getTipo(ss[0].tipo).color:'';
+  for(let d=1;d<=dim;d++){const ds=fmt(new Date(currentYear,currentMonth,d));const ss=dm[d]||[],hs=ss.length>0;
     let cl='cal-cell p-1 sm:p-1.5 flex flex-col justify-start bg-white border border-[#f2f2f7]';if(ds===tod)cl+=' today';if(hs)cl+=' has-session';
     let b='';if(hs){const sh=ss.slice(0,2),ex=ss.length-2;b='<div class="flex gap-0.5 mt-auto pt-0.5">'+sh.map(s=>`<span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full" style="background:${getTipo(s.tipo).color}"></span>`).join('')+(ex>0?`<span class="text-[7px] text-[#aeaeb2] ml-0.5">+${ex}</span>`:'')+'</div>'}
-    h+=`<div class="${cl}" style="${hs?'--dot-color:'+fc:''}" data-date="${ds}"><span class="day-num text-xs sm:text-sm font-medium ${ds===tod?'text-[#0071e3]':hs?'text-[#1c1c1e]':'text-[#aeaeb2]'}">${d}</span>${b}</div>`}
+    h+=`<div class="${cl}" data-date="${ds}"><span class="day-num text-xs sm:text-sm font-medium ${ds===tod?'text-[#0071e3]':hs?'text-[#1c1c1e]':'text-[#aeaeb2]'}">${d}</span>${b}</div>`}
   g.innerHTML=h;g.querySelectorAll('.cal-cell[data-date]').forEach(el=>{el.addEventListener('click',()=>{const d=el.dataset.date,ds=sessions.filter(s=>s.date===d);ds.length>0?showDayDetail(d,ds):openForm(d)})});
-  renderLegend();renderSessionList();renderStats();updateStreak();renderFilterChips();renderChart();renderWeeklyChart();renderAcwr();renderComparisonOpts();}
+  renderLegend();renderSessionList();renderStats();updateStreak();renderFilterChips();renderChart();renderWeeklyChart();renderAcwr();renderComparisonOpts();renderWellness();renderMeso();
+}
 function renderLegend(){document.getElementById('legendRow').innerHTML=TIPOS.map(t=>`<span class="inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full" style="background:${t.color}"></span>${t.label}</span>`).join('')}
-function renderSessionList(){const el=document.getElementById('sessionList'),em=document.getElementById('emptyMonth');
-  let ms=sessionsForMonth(currentYear,currentMonth).sort((a,b)=>b.date.localeCompare(a.date));
+
+// ═══════════════════════════════════════════════ SESSION LIST
+function renderSessionList(){
+  const el=document.getElementById('sessionList'),em=document.getElementById('emptyMonth');
+  let ms=sfM(currentYear,currentMonth).sort((a,b)=>b.date.localeCompare(a.date));
   if(filterTipo)ms=ms.filter(s=>s.tipo===filterTipo);if(filterTag)ms=ms.filter(s=>(s.tags||[]).includes(filterTag));
   if(!ms.length){el.innerHTML='';em.classList.remove('hidden');return}em.classList.add('hidden');
   el.innerHTML=ms.map(s=>{const t=getTipo(s.tipo),f=parseDate(s.date),ds=DAYS[f.getDay()],[,m,d]=s.date.split('-');
     const tags=(s.tags||[]).map(tg=>`<span class="text-[8px] bg-blue-50 text-[#0071e3]/80 px-1.5 py-0.5 rounded-full">${tg}</span>`).join('');
     return `<div class="flex items-center gap-2.5 bg-white rounded-xl px-3 py-2 border border-[#e5e5ea] fade-in group hover:border-[#d1d1d6] transition cursor-pointer" onclick="showDayDetail('${s.date}',sessions.filter(x=>x.date==='${s.date}'))">
       <div class="text-center min-w-[2rem]"><div class="text-xs font-bold text-[#1c1c1e]">${d}/${m}</div><div class="text-[9px] text-[#aeaeb2]">${ds}</div></div>
-      <span class="type-badge ${t.badge} border">${t.label}</span>
-      ${tags?'<div class="flex gap-0.5 flex-wrap">'+tags+'</div>':''}
+      <span class="type-badge ${t.badge} border">${t.label}</span>${tags?'<div class="flex gap-0.5 flex-wrap">'+tags+'</div>':''}
       <div class="ml-auto flex items-center gap-2 text-[10px] text-[#8e8e93]">
         <span class="font-mono font-semibold text-[#3a3a3c]">${s.volume}min</span>
         <span class="font-mono text-[#0071e3]">RPE ${s.intensity}</span>
@@ -448,73 +351,251 @@ function renderSessionList(){const el=document.getElementById('sessionList'),em=
         <button onclick="event.stopPropagation();openEdit('${s.id}')" class="p-0.5 hover:text-[#0071e3] transition opacity-0 group-hover:opacity-100"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
         <button onclick="event.stopPropagation();showDeleteConfirm('${s.id}')" class="p-0.5 hover:text-red-500 transition opacity-0 group-hover:opacity-100"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
       </div></div>`}).join('')}
-function renderFilterChips(){const el=document.getElementById('filterChips');
+
+// ═══════════════════════════════════════════════ FILTER + SEARCH + COMPARISON
+function renderFilterChips(){
+  const el=document.getElementById('filterChips');
   let h=`<button class="text-[10px] px-2 py-1 rounded-full border transition ${!filterTipo?'bg-blue-50 border-blue-200 text-[#0071e3]':'bg-transparent border-[#e5e5ea] text-[#8e8e93] hover:border-[#d1d1d6]'}" data-tipo="">Todas</button>`;
   TIPOS.forEach(t=>{const a=filterTipo===t.id;h+=`<button class="text-[10px] px-2 py-1 rounded-full border transition ${a?'bg-blue-50 border-blue-200 text-[#0071e3]':'bg-transparent border-[#e5e5ea] text-[#8e8e93] hover:border-[#d1d1d6]'}" data-tipo="${t.id}">${t.label}</button>`});
-  getAllTags().forEach(tg=>{const a=filterTag===tg;h+=`<button class="tag-chip text-[10px] px-2 py-1 rounded-full border transition ${a?'active':'bg-transparent border-[#e5e5ea] text-[#8e8e93]'}" data-tag="${tg}">${tg}</button>`});
-  el.innerHTML=h;el.querySelectorAll('[data-tipo]').forEach(b=>b.addEventListener('click',()=>{filterTipo=b.dataset.tipo||null;filterTag=null;renderFilterChips();renderSessionList()}));el.querySelectorAll('[data-tag]').forEach(b=>b.addEventListener('click',()=>{filterTag=b.dataset.tag||null;filterTipo=null;renderFilterChips();renderSessionList()}))}
-function renderComparisonOpts(){const sel=document.getElementById('compareMonth'),cur=currentYear+'-'+String(currentMonth+1).padStart(2,'0');let o='<option value="">—</option>';const s=new Set();sessions.forEach(s=>{const k=s.date.slice(0,7);if(k!==cur&&!s.has(k)){s.add(k);o+=`<option value="${k}">${MONTHS[parseInt(k.split('-')[1])-1]} ${k.split('-')[0]}</option>`}});sel.innerHTML=o;sel.onchange=()=>{const bx=document.getElementById('comparisonBox');if(!sel.value){bx.classList.add('hidden');return}const[yr,mth]=sel.value.split('-').map(Number),ms=sessionsForMonth(yr,mth-1),ms2=sessionsForMonth(currentYear,currentMonth);if(!ms.length||!ms2.length){bx.classList.add('hidden');return}bx.classList.remove('hidden');const s1=getStats(ms),s2=getStats(ms2);function diff(a,b){if(a>b)return'<span class="text-green-600">▲ +'+(a-b)+'</span>';if(a<b)return'<span class="text-red-500">▼ '+(a-b)+'</span>';return'<span class="text-[#aeaeb2]">—</span>'}document.getElementById('compOtherLabel').textContent=MONTHS[mth-1]+' '+yr;document.getElementById('compCurrentLabel').textContent=MONTHS[currentMonth]+' '+currentYear;document.getElementById('compCurrentContent').innerHTML='<div>'+s2.count+' ses</div><div>'+s2.vol+' min</div><div>RPE '+s2.avgInt+'</div><div>'+s2.srpe+' UA</div>';document.getElementById('compOtherContent').innerHTML='<div>'+s1.count+' ses '+diff(s2.count,s1.count)+'</div><div>'+s1.vol+' min '+diff(s2.vol,s1.vol)+'</div><div>RPE '+s1.avgInt+'</div><div>'+s1.srpe+' UA</div>'}}
-function setupSearch(){const i=document.getElementById('searchNotes');let t;i.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(()=>{const q=i.value.toLowerCase().trim();document.querySelectorAll('#sessionList>div').forEach(el=>{const txt=el.textContent.toLowerCase();el.style.display=q&&!txt.includes(q)?'none':'flex'})},200)})}
-function renderChart(){const sec=document.getElementById('chartEvolutionSection'),c=document.getElementById('evolutionChart');if(!c)return;const ms=sessionsForMonth(currentYear,currentMonth).sort((a,b)=>a.date.localeCompare(b.date));if(ms.length<2){sec.classList.add('hidden');return}sec.classList.remove('hidden');const l=ms.map(s=>parseInt(s.date.split('-')[2],10)),v=ms.map(s=>parseInt(s.volume)||0),sr=ms.map(s=>srpe(s));if(chartInstance){chartInstance.destroy()}chartInstance=new Chart(c.getContext('2d'),{type:'bar',data:{labels:l,datasets:[{label:'Vol (min)',data:v,backgroundColor:'rgba(0,113,227,0.3)',borderColor:'rgba(0,113,227,0.7)',borderWidth:1,borderRadius:4,order:2,yAxisID:'y'},{label:'sRPE (UA)',data:sr,borderColor:'#ff3b30',backgroundColor:'rgba(255,59,48,0.08)',borderWidth:2,pointBackgroundColor:'#ff3b30',pointRadius:3,pointHoverRadius:5,type:'line',tension:0.3,order:1,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:window.innerWidth<640?1.2:2.2,plugins:{legend:{labels:{color:'#8e8e93',font:{size:9,family:'-apple-system'},boxWidth:10,boxHeight:7,padding:8},position:'bottom'},tooltip:{backgroundColor:'#ffffff',titleColor:'#1c1c1e',bodyColor:'#3a3a3c',borderColor:'#e5e5ea',borderWidth:1,padding:8,bodyFont:{size:10},callbacks:{title:items=>'Día '+items[0].label}}},scales:{x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#aeaeb2',font:{size:9}}},y:{beginAtZero:true,position:'left',title:{display:true,text:'min / UA',color:'#aeaeb2',font:{size:8}},grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#aeaeb2',font:{size:8}}},y1:{beginAtZero:true,position:'right',grid:{display:false},ticks:{color:'#aeaeb2',font:{size:8}}}}}})}
-function renderWeeklyChart(){const sec=document.getElementById('chartWeeklySection'),c=document.getElementById('weeklyChart');if(!c)return;const w=weeklyTotals(12);if(w.every(x=>x.count===0)){sec.classList.add('hidden');return}sec.classList.remove('hidden');if(weeklyChartInstance){weeklyChartInstance.destroy()}weeklyChartInstance=new Chart(c.getContext('2d'),{type:'bar',data:{labels:w.map(x=>x.label),datasets:[{label:'Vol (min)',data:w.map(x=>x.vol),backgroundColor:'rgba(52,199,89,0.5)',borderColor:'rgba(52,199,89,0.9)',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:window.innerWidth<640?1.2:2.5,plugins:{legend:{labels:{color:'#8e8e93',font:{size:9},boxWidth:10,boxHeight:7,padding:6},position:'bottom'},tooltip:{backgroundColor:'#ffffff',titleColor:'#1c1c1e',bodyColor:'#3a3a3c',borderColor:'#e5e5ea',borderWidth:1,padding:6,bodyFont:{size:9}}},scales:{x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#aeaeb2',font:{size:8}}},y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#aeaeb2',font:{size:8}}}}}})}
-function renderStats(){const ms=sessionsForMonth(currentYear,currentMonth),s=getStats(ms);document.getElementById('statSessions').textContent=s.count;document.getElementById('statVolume').textContent=s.vol+' min';document.getElementById('statSrpe').textContent=s.srpe+' UA'}
+  allTags().forEach(tg=>{const a=filterTag===tg;h+=`<button class="tag-chip text-[10px] px-2 py-1 rounded-full border transition ${a?'bg-blue-50 border-blue-200 text-[#0071e3]':'bg-transparent border-[#e5e5ea] text-[#8e8e93]'} cursor-pointer" data-tag="${tg}">${tg}</button>`});
+  el.innerHTML=h;el.querySelectorAll('[data-tipo]').forEach(b=>b.addEventListener('click',()=>{filterTipo=b.dataset.tipo||null;filterTag=null;renderFilterChips();renderSessionList()}));el.querySelectorAll('[data-tag]').forEach(b=>b.addEventListener('click',()=>{filterTag=b.dataset.tag||null;filterTipo=null;renderFilterChips();renderSessionList()}))
+}
+function renderComparisonOpts(){const sel=document.getElementById('compareMonth'),cur=currentYear+'-'+String(currentMonth+1).padStart(2,'0');let o='<option value="">—</option>';const s=new Set();sessions.forEach(s=>{const k=s.date.slice(0,7);if(k!==cur&&!s.has(k)){s.add(k);o+=`<option value="${k}">${MONTHS[parseInt(k.split('-')[1])-1]} ${k.split('-')[0]}</option>`}});sel.innerHTML=o;sel.onchange=()=>{const bx=document.getElementById('comparisonBox');if(!sel.value){bx.classList.add('hidden');return}const[yr,mth]=sel.value.split('-').map(Number),ms=sfM(yr,mth-1),ms2=sfM(currentYear,currentMonth);if(!ms.length||!ms2.length){bx.classList.add('hidden');return}bx.classList.remove('hidden');const s1=gStats(ms),s2=gStats(ms2);function df(a,b){if(a>b)return'<span class="text-green-600">▲ +'+(a-b)+'</span>';if(a<b)return'<span class="text-red-500">▼ '+(a-b)+'</span>';return'<span class="text-[#aeaeb2]">—</span>'}document.getElementById('compOtherLabel').textContent=MONTHS[mth-1]+' '+yr;document.getElementById('compCurrentLabel').textContent=MONTHS[currentMonth]+' '+currentYear;document.getElementById('compCurrentContent').innerHTML='<div>'+s2.count+' ses</div><div>'+s2.vol+' min</div><div>RPE '+s2.avgInt+'</div><div>'+s2.srpe+' UA</div>';document.getElementById('compOtherContent').innerHTML='<div>'+s1.count+' ses '+df(s2.count,s1.count)+'</div><div>'+s1.vol+' min '+df(s2.vol,s1.vol)+'</div><div>RPE '+s1.avgInt+'</div><div>'+s1.srpe+' UA</div>'}}
+function setupSearch(){const i=document.getElementById('searchNotes');let t;i.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(()=>{const q=i.value.toLowerCase().trim();document.querySelectorAll('#sessionList>div').forEach(el=>{el.style.display=q&&!el.textContent.toLowerCase().includes(q)?'none':'flex'})},200)})}
+
+// ═══════════════════════════════════════════════ CHARTS
+function renderChart(){
+  const sec=document.getElementById('chartEvolutionSection'),c=document.getElementById('evolutionChart');if(!c)return;
+  const ms=sfM(currentYear,currentMonth).sort((a,b)=>a.date.localeCompare(b.date));if(ms.length<2){sec.classList.add('hidden');return}sec.classList.remove('hidden');
+  const l=ms.map(s=>parseInt(s.date.split('-')[2],10)),v=ms.map(s=>parseInt(s.volume)||0),sr=ms.map(s=>srpe(s));
+  if(chartInstance)chartInstance.destroy();
+  chartInstance=new Chart(c.getContext('2d'),{type:'bar',data:{labels:l,datasets:[{label:'Vol (min)',data:v,backgroundColor:'rgba(0,113,227,.3)',borderColor:'rgba(0,113,227,.7)',borderWidth:1,borderRadius:4,order:2,yAxisID:'y'},{label:'sRPE (UA)',data:sr,borderColor:'#ff3b30',backgroundColor:'rgba(255,59,48,.08)',borderWidth:2,pointBackgroundColor:'#ff3b30',pointRadius:3,type:'line',tension:.3,order:1,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:window.innerWidth<640?1.2:2.2,plugins:{legend:{labels:{color:'#8e8e93',font:{size:9},boxWidth:10,boxHeight:7,padding:8},position:'bottom'},tooltip:{backgroundColor:'#fff',titleColor:'#1c1c1e',bodyColor:'#3a3a3c',borderColor:'#e5e5ea',borderWidth:1,padding:7,bodyFont:{size:10},callbacks:{title:items=>'Día '+items[0].label}}},scales:{x:{grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#aeaeb2',font:{size:9}}},y:{beginAtZero:true,position:'left',title:{display:true,text:'min / UA',color:'#aeaeb2',font:{size:8}},grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#aeaeb2',font:{size:8}}},y1:{beginAtZero:true,position:'right',grid:!1,ticks:{color:'#aeaeb2',font:{size:8}}}}}})
+}
+function renderWeeklyChart(){
+  const sec=document.getElementById('chartWeeklySection'),c=document.getElementById('weeklyChart');if(!c)return;
+  const w=wTotals(12);if(w.every(x=>x.count===0)){sec.classList.add('hidden');return}sec.classList.remove('hidden');
+  if(weeklyChartInstance)weeklyChartInstance.destroy();
+  // Trend: simple linear regression on weekly volume
+  const n=w.filter(x=>x.vol>0).length;let sx=0,sy=0,sxy=0,sx2=0,idx=0;
+  w.forEach((x,i)=>{if(x.vol>0){sx+=i;sy+=x.vol;sxy+=i*x.vol;sx2+=i*i;idx++}});
+  const slope=n>1?(n*sxy-sx*sy)/(n*sx2-sx*sx):0;const intercept=n>1?(sy-slope*sx)/n:0;
+  const trendData=w.map((x,i)=>slope*i+intercept);
+  weeklyChartInstance=new Chart(c.getContext('2d'),{type:'bar',data:{labels:w.map(x=>x.label),datasets:[{label:'Vol (min)',data:w.map(x=>x.vol),backgroundColor:'rgba(52,199,89,.5)',borderColor:'rgba(52,199,89,.9)',borderWidth:1,borderRadius:4,order:2},{label:'Tendencia',data:trendData,type:'line',borderColor:'#0071e3',borderWidth:2,borderDash:[5,5],pointRadius:0,order:1,fill:!1}]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:window.innerWidth<640?1.2:2.5,plugins:{legend:{labels:{color:'#8e8e93',font:{size:9},boxWidth:10,boxHeight:7,padding:6},position:'bottom'},tooltip:{backgroundColor:'#fff',titleColor:'#1c1c1e',bodyColor:'#3a3a3c',borderColor:'#e5e5ea',borderWidth:1,padding:6,bodyFont:{size:9}}},scales:{x:{grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#aeaeb2',font:{size:8}}},y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#aeaeb2',font:{size:8}}}}}})
+}
+function renderStats(){const ms=sfM(currentYear,currentMonth),s=gStats(ms);document.getElementById('statSessions').textContent=s.count;document.getElementById('statVolume').textContent=s.vol+' min';document.getElementById('statSrpe').textContent=s.srpe+' UA'}
 function updateStreak(){const el=document.getElementById('statStreak');if(!el)return;const s=[...sessions].sort((a,b)=>b.date.localeCompare(a.date));if(!s.length){el.textContent='—';el.className='text-lg font-bold font-mono text-[#aeaeb2]';return}const ud=[...new Set(s.map(x=>x.date))].sort((a,b)=>b.localeCompare(a));let i=0;const t=new Date();while(i<ud.length){if(Math.round((t-parseDate(ud[i]))/(864e5))===i)i++;else break}if(!i){el.textContent='—';el.className='text-lg font-bold font-mono text-[#aeaeb2]'}else{el.textContent=i+' día'+(i>1?'s':'');el.className='text-lg font-bold font-mono text-[#0071e3]'}}
+
+// ═══════════════════════════════════════════════ PANEL
 function openPanel(t,b){document.getElementById('panelTitle').textContent=t;document.getElementById('panelBody').innerHTML=b;document.getElementById('panelOverlay').classList.remove('hidden');document.getElementById('sidePanel').classList.remove('translate-x-full');document.getElementById('sidePanel').classList.add('open');document.body.style.overflow='hidden'}
 function closePanel(){document.getElementById('panelOverlay').classList.add('hidden');document.getElementById('sidePanel').classList.add('translate-x-full');document.getElementById('sidePanel').classList.remove('open');document.body.style.overflow=''}
-function openPanelDirect(){document.getElementById('panelOverlay').classList.remove('hidden');document.getElementById('sidePanel').classList.remove('translate-x-full');document.getElementById('sidePanel').classList.add('open');document.body.style.overflow='hidden'}
-function showDayDetail(ds,dd){const f=parseDate(ds),dw=DAYS[f.getDay()],[,m,d]=ds.split('-');const s=getStats(dd);let b=`<div class="mb-3 pb-2 border-b border-[#e5e5ea]"><div class="text-xl font-bold text-[#1c1c1e]">${d} de ${MONTHS[parseInt(m)-1]}</div><div class="text-xs text-[#8e8e93]">${dw}</div></div><div class="grid grid-cols-3 gap-2 mb-3">
-    <div class="ios-inset p-2 text-center"><div class="text-[9px] text-[#8e8e93]">Sesiones</div><div class="text-base font-bold text-[#0071e3]">${s.count}</div></div>
-    <div class="ios-inset p-2 text-center"><div class="text-[9px] text-[#8e8e93]">Volumen</div><div class="text-base font-bold text-[#0071e3]">${s.vol} min</div></div>
-    <div class="ios-inset p-2 text-center"><div class="text-[9px] text-[#8e8e93]">sRPE</div><div class="text-base font-bold text-[#0071e3]">${s.srpe} UA</div></div></div><div class="space-y-2">`;
+function openPanelD(){document.getElementById('panelOverlay').classList.remove('hidden');document.getElementById('sidePanel').classList.remove('translate-x-full');document.getElementById('sidePanel').classList.add('open');document.body.style.overflow='hidden'}
+
+// ═══════════════════════════════════════════════ DAY DETAIL
+function showDayDetail(ds,dd){
+  const f=parseDate(ds),dw=DAYS[f.getDay()],[,m,d]=ds.split('-');const s=gStats(dd);
+  let b=`<div class="mb-3 pb-2 border-b border-[#e5e5ea]"><div class="text-xl font-bold">${d} de ${MONTHS[parseInt(m)-1]}</div><div class="text-xs text-[#8e8e93]">${dw}</div></div>
+  <div class="grid grid-cols-3 gap-2 mb-3"><div class="ios-inset p-2 text-center"><div class="text-[9px] text-[#8e8e93]">Sesiones</div><div class="text-base font-bold text-[#0071e3]">${s.count}</div></div>
+  <div class="ios-inset p-2 text-center"><div class="text-[9px] text-[#8e8e93]">Volumen</div><div class="text-base font-bold text-[#0071e3]">${s.vol} min</div></div>
+  <div class="ios-inset p-2 text-center"><div class="text-[9px] text-[#8e8e93]">sRPE</div><div class="text-base font-bold text-[#0071e3]">${s.srpe} UA</div></div></div><div class="space-y-2">`;
   dd.forEach(x=>{const t=getTipo(x.tipo),sr=srpe(x);const tg=(x.tags||[]).map(tg=>`<span class="text-[9px] bg-blue-50 text-[#0071e3]/80 px-1.5 py-0.5 rounded-full">${tg}</span>`).join('');
+    let extra='';if(x.hrZones){const hz=x.hrZones;const total=ZONES.reduce((a,z)=>a+(parseInt(hz[z])||0),0);if(total>0){extra=`<div class="mt-2"><div class="text-[10px] font-medium text-[#3a3a3c] mb-1">Zonas FC</div><div class="flex gap-1">`;
+      ZONES.forEach((z,i)=>{const val=parseInt(hz[z])||0;pct=total>0?Math.round(val/total*100):0;extra+=`<div class="flex-1 text-center bg-white rounded-lg py-1 px-0.5 border border-[#e5e5ea]"><div class="text-[9px] font-mono font-bold text-[#0071e3]">${val}'</div><div class="text-[8px] text-[#aeaeb2]">${ZLABELS[i]}</div></div>`});extra+=`</div></div>`}}
     b+=`<div class="ios-inset p-3 rounded-xl"><div class="flex items-center justify-between mb-1.5"><span class="type-badge ${t.badge} border text-[10px]">${t.label}</span>${tg?'<div class="flex gap-0.5">'+tg+'</div>':''}<div class="flex gap-1">
       <button onclick="closePanel();openEdit('${x.id}')" class="p-0.5 hover:text-[#0071e3] transition text-[#8e8e93]"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
       <button onclick="closePanel();showDeleteConfirm('${x.id}')" class="p-0.5 hover:text-red-500 transition text-[#8e8e93]"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></div></div>
-      <div class="flex gap-3 text-[11px] text-[#8e8e93] mb-1"><span class="font-mono font-semibold text-[#3a3a3c]">${x.volume} min</span><span class="font-mono text-[#0071e3]">RPE ${x.intensity}/10</span><span class="font-mono text-[#34c759]">${sr} UA</span></div>`;
-    if(x.exercises&&x.exercises.length){b+=`<div class="mt-2 space-y-1">`;x.exercises.forEach(ex=>{b+=`<div class="flex gap-2 text-[10px] bg-white rounded-lg px-2.5 py-1.5 border border-[#e5e5ea]"><span class="font-medium text-[#1c1c1e] min-w-[80px]">${ex.name}</span><span class="text-[#8e8e93]">${ex.sets}×${ex.reps}</span><span class="text-[#8e8e93]">${ex.weight} kg</span></div>`});b+=`</div>`}
-    if(x.notes)b+=`<div class="text-[11px] text-[#8e8e93] bg-white rounded-lg p-2 mt-1.5 leading-relaxed border border-[#e5e5ea]">${escapeHtml(x.notes)}</div>`;b+=`</div>`});
+      <div class="flex gap-3 text-[11px] text-[#8e8e93] mb-1"><span class="font-mono font-semibold text-[#3a3a3c]">${x.volume} min</span><span class="font-mono text-[#0071e3]">RPE ${x.intensity}/10</span><span class="font-mono text-[#34c759]">${sr} UA</span></div>${extra}`;
+    if(x.exercises&&x.exercises.length){b+=`<div class="mt-2 space-y-1">`;x.exercises.forEach(ex=>{const rm=ex.reps>0?Math.round(ex.weight*(1+ex.reps/30)):0;b+=`<div class="flex gap-2 text-[10px] bg-white rounded-lg px-2.5 py-1.5 border border-[#e5e5ea] items-center"><span class="font-medium text-[#1c1c1e] min-w-[80px]">${ex.name}</span><span class="text-[#8e8e93]">${ex.sets}×${ex.reps}</span><span class="text-[#8e8e93]">${ex.weight} kg</span>${rm?`<span class="ml-auto text-[#0071e3] font-semibold">1RM≈${rm} kg</span>`:''}</div>`});b+=`</div>`}
+    if(x.notes)b+=`<div class="text-[11px] text-[#8e8e93] bg-white rounded-lg p-2 mt-1.5 leading-relaxed border border-[#e5e5ea]">${esc(x.notes)}</div>`;b+=`</div>`});
   b+='</div>';openPanel(`📋 ${d} ${MONTHS[parseInt(m)-1]}`,b)}
-function openForm(date){editingId=null;document.getElementById('panelTitle').textContent='📝 Nueva sesión';document.getElementById('panelBody').innerHTML=renderFormHtml(date||todayStr(),null);openPanelDirect();setupFormListeners()}
-function openEdit(id){const s=sessions.find(x=>x.id===id);if(!s)return;editingId=id;document.getElementById('panelTitle').textContent='✏️ Editar sesión';document.getElementById('panelBody').innerHTML=renderFormHtml(s.date,s);openPanelDirect();setupFormListeners()}
-function renderFormHtml(date,session){const s=session||{};const to=TIPOS.map(t=>`<option value="${t.id}" ${s.tipo===t.id?'selected':''}>${t.label}</option>`).join('');const tv=(s.tags||[]).join(', ');
-  const ex=(s.exercises||[]).map((ex,i)=>`<div class="exercise-row flex gap-1.5 items-center" data-idx="${i}"><input type="text" name="ex_name" value="${ex.name}" placeholder="Ejercicio" class="flex-1 ios-input py-1.5 text-xs" /><input type="number" name="ex_sets" value="${ex.sets}" placeholder="S" class="w-10 ios-input py-1.5 text-xs text-center" /><input type="number" name="ex_reps" value="${ex.reps}" placeholder="R" class="w-10 ios-input py-1.5 text-xs text-center" /><input type="number" name="ex_weight" value="${ex.weight}" placeholder="kg" class="w-12 ios-input py-1.5 text-xs text-center" /><button type="button" onclick="this.closest(\'.exercise-row\').remove()" class="p-1 text-[#8e8e93] hover:text-red-500 transition"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button></div>`).join('');
+
+// ═══════════════════════════════════════════════ FORM
+function openForm(date){editingId=null;document.getElementById('panelTitle').textContent='📝 Nueva sesión';document.getElementById('panelBody').innerHTML=renderFormHtml(date||todayStr(),null);openPanelD();setupFormListeners()}
+function openEdit(id){const s=sessions.find(x=>x.id===id);if(!s)return;editingId=id;document.getElementById('panelTitle').textContent='✏️ Editar sesión';document.getElementById('panelBody').innerHTML=renderFormHtml(s.date,s);openPanelD();setupFormListeners()}
+function renderFormHtml(date,session){
+  const s=session||{};const to=TIPOS.map(t=>`<option value="${t.id}" ${s.tipo===t.id?'selected':''}>${t.label}</option>`).join('');const tv=(s.tags||[]).join(', ');
+  const ex=(s.exercises||[]).map((ex,i)=>`<div class="exercise-row flex gap-1.5 items-center" data-idx="${i}"><input type="text" name="ex_name" value="${esc(ex.name)}" placeholder="Ejercicio" class="flex-1 ios-input py-1.5 text-xs" /><input type="number" name="ex_sets" value="${ex.sets}" placeholder="S" class="w-10 ios-input py-1.5 text-xs text-center" /><input type="number" name="ex_reps" value="${ex.reps}" placeholder="R" class="w-10 ios-input py-1.5 text-xs text-center" /><input type="number" name="ex_weight" value="${ex.weight}" placeholder="kg" class="w-12 ios-input py-1.5 text-xs text-center" /><button type="button" onclick="this.closest('.exercise-row').remove()" class="p-1 text-[#8e8e93] hover:text-red-500 transition"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button></div>`).join('');
+  // Templates selector
+  const tmplOpts=templates.length?templates.map(t=>`<option value="${t.id}">${t.name}</option>`).join(''):'<option value="">No hay plantillas</option>';
+  // HR zones (visible for cardio)
+  const hz=s.hrZones||{};const hzHtml=ZONES.map((z,i)=>`<div><label class="block text-[10px] text-[#8e8e93]">${ZLABELS[i]} (min)</label><input type="number" name="hr_${z}" value="${hz[z]||''}" placeholder="0" class="ios-input py-1.5 w-full text-xs text-center" /></div>`).join('');
   return `<form id="sessionForm" class="space-y-3">
     <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">Fecha</label><input type="date" name="date" value="${s.date||date}" class="ios-input w-full" required /></div>
-    <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">Tipo de sesión</label><select name="tipo" id="formTipo" class="ios-input ios-select w-full">${to}</select></div>
+    <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">Tipo</label><select name="tipo" id="formTipo" class="ios-input ios-select w-full">${to}</select></div>
     <div class="grid grid-cols-2 gap-2">
       <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">Volumen (min)</label><input type="number" name="volume" value="${s.volume||''}" min="1" max="600" placeholder="45" class="ios-input w-full" required /></div>
-      <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">Intensidad RPE</label>
+      <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">RPE</label>
         <div class="flex items-center gap-2 pt-1"><span class="text-[10px] text-[#aeaeb2]">1</span><input type="range" name="intensity" min="1" max="10" value="${s.intensity||'5'}" class="ios-slider flex-1" oninput="document.getElementById('rpeVal').textContent=this.value" /><span class="text-[10px] text-[#aeaeb2]">10</span></div>
         <div class="text-center mt-0.5"><span id="rpeVal" class="text-base font-bold font-mono text-[#0071e3]">${s.intensity||'5'}</span><span class="text-[10px] text-[#aeaeb2]">/10</span></div></div>
     </div>
-    <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">Tags <span class="text-[#aeaeb2]">(separados por coma)</span></label><input type="text" name="tags" value="${escapeHtml(tv)}" placeholder="#recuperación, #técnica-nueva" class="ios-input w-full" /></div>
-    <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">Sensaciones / Notas</label><textarea name="notes" rows="2" placeholder="Fatiga, dolores, ánimo…" class="ios-input w-full resize-none">${escapeHtml(s.notes||'')}</textarea></div>
-    <div id="exercisesSection" class="${(s.tipo||'fuerza')==='fuerza'?'':'hidden'}"><div class="flex items-center justify-between mb-1"><label class="text-[10px] font-medium text-[#8e8e93]">Ejercicios</label><button type="button" onclick="addExerciseRow()" class="widget-btn">+ Añadir</button></div><div id="exerciseRows" class="space-y-1.5">${ex||''}</div></div>
-    <div class="flex gap-2 pt-1"><button type="submit" class="btn-ios-primary flex-1 text-sm">${session?'Guardar cambios':'Registrar sesión'}</button><button type="button" onclick="closePanel()" class="btn-ios-secondary text-sm">Cancelar</button></div></form>`}
+    <!-- HR Zones (cardio) -->
+    <div id="hrZoneSection" class="${(s.tipo||'fuerza')==='cardio'?'':'hidden'}"><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">Zonas frecuencia cardiaca</label><div class="grid grid-cols-5 gap-1">${hzHtml}</div></div>
+    <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">Tags</label><input type="text" name="tags" value="${esc(tv)}" placeholder="#recuperación, #técnica-nueva" class="ios-input w-full" /></div>
+    <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">Notas</label><textarea name="notes" rows="2" placeholder="Fatiga, dolores, ánimo…" class="ios-input w-full resize-none">${esc(s.notes||'')}</textarea></div>
+    <!-- Exercises (Fuerza) + Templates -->
+    <div id="exercisesSection" class="${(s.tipo||'fuerza')==='fuerza'?'':'hidden'}">
+      <div class="flex items-center justify-between mb-1"><label class="text-[10px] font-medium text-[#8e8e93]">Ejercicios</label>
+        <div class="flex gap-1"><select id="tmplSelect" class="ios-input ios-select py-1 pr-6 text-[10px] w-auto">${tmplOpts}</select><button type="button" id="btnLoadTmpl" class="btn-s text-[10px] py-1 px-2">Cargar</button><button type="button" onclick="addExerciseRow()" class="btn-s text-[10px] py-1 px-2">+</button></div>
+      </div><div id="exerciseRows" class="space-y-1.5">${ex||''}</div>
+    </div>
+    <div class="flex gap-2 pt-1"><button type="submit" class="btn-p flex-1 text-sm">${session?'Guardar':'Registrar'}</button><button type="button" onclick="closePanel()" class="btn-s text-sm">Cancelar</button></div>
+    ${session&&session.exercises&&session.exercises.length?`<button type="button" id="btnSaveTmpl" class="btn-s w-full text-xs">💾 Guardar como plantilla</button>`:''}
+  </form>`}
 function addExerciseRow(){const c=document.getElementById('exerciseRows'),d=document.createElement('div');d.className='exercise-row flex gap-1.5 items-center';d.innerHTML='<input type="text" name="ex_name" placeholder="Ejercicio" class="flex-1 ios-input py-1.5 text-xs" /><input type="number" name="ex_sets" placeholder="S" class="w-10 ios-input py-1.5 text-xs text-center" /><input type="number" name="ex_reps" placeholder="R" class="w-10 ios-input py-1.5 text-xs text-center" /><input type="number" name="ex_weight" placeholder="kg" class="w-12 ios-input py-1.5 text-xs text-center" /><button type="button" onclick="this.closest(\'.exercise-row\').remove()" class="p-1 text-[#8e8e93] hover:text-red-500 transition"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>';c.appendChild(d);d.scrollIntoView({behavior:'smooth',block:'nearest'})}
-function setupFormListeners(){const f=document.getElementById('sessionForm');if(!f)return;const ts=document.getElementById('formTipo');if(ts)ts.addEventListener('change',()=>{document.getElementById('exercisesSection').classList.toggle('hidden',ts.value!=='fuerza')});f.addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(f);const d={date:fd.get('date'),tipo:fd.get('tipo'),volume:fd.get('volume'),intensity:fd.get('intensity'),notes:fd.get('notes')||'',tags:(fd.get('tags')||'').split(',').map(t=>t.trim()).filter(Boolean),exercises:[]};if(!d.date||!d.volume)return;document.querySelectorAll('#exerciseRows .exercise-row').forEach(r=>{const inp=r.querySelectorAll('input');if(inp.length>=4&&inp[0].value.trim())d.exercises.push({name:inp[0].value.trim(),sets:parseInt(inp[1].value)||0,reps:parseInt(inp[2].value)||0,weight:parseFloat(inp[3].value)||0})});if(editingId){const idx=sessions.findIndex(s=>s.id===editingId);if(idx!==-1){sessions[idx]={...sessions[idx],...d,id:editingId}}editingId=null}else{const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);sessions.push({...d,id})}saveSessions();closePanel();renderCalendar();renderDashboard()})}
+function setupFormListeners(){
+  const f=document.getElementById('sessionForm');if(!f)return;
+  const ts=document.getElementById('formTipo');
+  if(ts)ts.addEventListener('change',()=>{document.getElementById('exercisesSection').classList.toggle('hidden',ts.value!=='fuerza');document.getElementById('hrZoneSection').classList.toggle('hidden',ts.value!=='cardio')});
+  // Load template
+  const btnLoad=document.getElementById('btnLoadTmpl');
+  if(btnLoad)btnLoad.addEventListener('click',()=>{const sel=document.getElementById('tmplSelect');const tmpl=templates.find(t=>t.id===sel.value);if(!tmpl)return;const c=document.getElementById('exerciseRows');c.innerHTML='';tmpl.exercises.forEach(ex=>{const d=document.createElement('div');d.className='exercise-row flex gap-1.5 items-center';d.innerHTML='<input type="text" name="ex_name" value="'+esc(ex.name)+'" class="flex-1 ios-input py-1.5 text-xs" /><input type="number" name="ex_sets" value="'+ex.sets+'" class="w-10 ios-input py-1.5 text-xs text-center" /><input type="number" name="ex_reps" value="'+ex.reps+'" class="w-10 ios-input py-1.5 text-xs text-center" /><input type="number" name="ex_weight" value="'+ex.weight+'" class="w-12 ios-input py-1.5 text-xs text-center" /><button type="button" onclick="this.closest(\'.exercise-row\').remove()" class="p-1 text-[#8e8e93] hover:text-red-500 transition"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>';c.appendChild(d)})});
+  // Save template
+  const btnSave=document.getElementById('btnSaveTmpl');
+  if(btnSave)btnSave.addEventListener('click',()=>{const name=prompt('Nombre de la plantilla:');if(!name)return;const rows=document.querySelectorAll('#exerciseRows .exercise-row');const exercises=[];rows.forEach(r=>{const inp=r.querySelectorAll('input');if(inp.length>=4&&inp[0].value.trim())exercises.push({name:inp[0].value.trim(),sets:parseInt(inp[1].value)||0,reps:parseInt(inp[2].value)||0,weight:parseFloat(inp[3].value)||0})});if(!exercises.length)return;const id=Date.now().toString(36);templates.push({id,name,exercises});saveTemplates();alert('Plantilla guardada ✅')});
+  f.addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(f);
+    const d={date:fd.get('date'),tipo:fd.get('tipo'),volume:fd.get('volume'),intensity:fd.get('intensity'),notes:fd.get('notes')||'',tags:(fd.get('tags')||'').split(',').map(t=>t.trim()).filter(Boolean),exercises:[],hrZones:{}};
+    if(!d.date||!d.volume)return;
+    ZONES.forEach(z=>{const v=parseInt(fd.get('hr_'+z))||0;if(v)d.hrZones[z]=v});
+    document.querySelectorAll('#exerciseRows .exercise-row').forEach(r=>{const inp=r.querySelectorAll('input');if(inp.length>=4&&inp[0].value.trim())d.exercises.push({name:inp[0].value.trim(),sets:parseInt(inp[1].value)||0,reps:parseInt(inp[2].value)||0,weight:parseFloat(inp[3].value)||0})});
+    if(editingId){const idx=sessions.findIndex(s=>s.id===editingId);if(idx!==-1){sessions[idx]={...sessions[idx],...d,id:editingId}}editingId=null}else{const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);sessions.push({...d,id})}
+    saveSessions();closePanel();renderCalendar();renderDashboard()})
+}
+
+// ═══════════════════════════════════════════════ DELETE
 function showDeleteConfirm(id){pendingDeleteId=id;document.getElementById('confirmOverlay').classList.remove('hidden')}
 function closeConfirm(){document.getElementById('confirmOverlay').classList.add('hidden');pendingDeleteId=null}
 function executeDelete(){if(!pendingDeleteId)return;sessions=sessions.filter(s=>s.id!==pendingDeleteId);saveSessions();pendingDeleteId=null;closeConfirm();renderCalendar();renderDashboard();closePanel()}
-function renderMeasurements(){const l=document.getElementById('measurementsList'),e=document.getElementById('emptyMeasurements');if(!measurements.length){l.innerHTML='';e.classList.remove('hidden');return}e.classList.add('hidden');const s=[...measurements].sort((a,b)=>b.date.localeCompare(a.date));l.innerHTML=s.map(m=>{const[,mm,dd]=m.date.split('-');return`<div class="flex items-center gap-3 bg-white rounded-xl px-3 py-2 border border-[#e5e5ea] fade-in"><div class="text-center min-w-[2rem]"><div class="text-xs font-bold text-[#1c1c1e]">${dd}/${mm}</div></div><div class="flex gap-3 text-xs"><span class="font-mono text-[#0071e3]">${m.weight} kg</span>${m.bodyFat?`<span class="font-mono text-[#8e8e93]">${m.bodyFat}% grasa</span>`:''}${m.waist?`<span class="font-mono text-[#8e8e93]">${m.waist} cm</span>`:''}</div><button onclick="deleteMeasurement('${m.id}')" class="ml-auto p-0.5 hover:text-red-500 transition text-[#aeaeb2]"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></div>`}).join('');renderMeasurementsChart()}
-function renderMeasurementsChart(){const c=document.getElementById('measurementsChart');if(!c)return;const s=[...measurements].sort((a,b)=>a.date.localeCompare(b.date));if(measChartInstance){measChartInstance.destroy()}if(s.length<2)return;measChartInstance=new Chart(c.getContext('2d'),{type:'line',data:{labels:s.map(m=>{const[,mm,dd]=m.date.split('-');return dd+'/'+mm}),datasets:[{label:'Peso (kg)',data:s.map(m=>parseFloat(m.weight)),borderColor:'#0071e3',backgroundColor:'rgba(0,113,227,0.08)',borderWidth:2,pointBackgroundColor:'#0071e3',pointRadius:3,tension:0.3,fill:true}]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:2.5,plugins:{legend:{labels:{color:'#8e8e93',font:{size:9},boxWidth:10,boxHeight:7,padding:6},position:'bottom'},tooltip:{backgroundColor:'#ffffff',titleColor:'#1c1c1e',bodyColor:'#3a3a3c',borderColor:'#e5e5ea',borderWidth:1,padding:6,bodyFont:{size:9}}},scales:{x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#aeaeb2',font:{size:8}}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#aeaeb2',font:{size:8}}}}}})}
-function deleteMeasurement(id){if(!confirm('¿Eliminar esta medición?'))return;measurements=measurements.filter(m=>m.id!==id);saveMeasurements();renderMeasurements()}
+
+// ═══════════════════════════════════════════════ WELLNESS + PAIN MAP
+function renderWellness(){
+  const sec=document.getElementById('wellnessCard'),today=todayStr();
+  const w=wellness.find(x=>x.date===today);
+  if(w){const score=Math.round((w.sleep+w.nutrition+(7-w.stress)+(7-w.fatigue))/4*10)/10;const parts=w.pain||[];sec.classList.remove('hidden');
+    document.getElementById('wellnessContent').innerHTML=`<span class="font-medium text-[#1c1c1e]">Score: ${score}/7</span> — Sueño ${w.sleep}, Nutrición ${w.nutrition}, Estrés ${w.stress}, Fatiga ${w.fatigue}${parts.length?` · <span class="text-red-400">${parts.length} zonas con dolor</span>`:''}`}else{sec.classList.remove('hidden');document.getElementById('wellnessContent').innerHTML='<span class="text-[#aeaeb2]">Aún no has registrado tu bienestar de hoy.</span>'}
+}
+function renderPainMap(selected){
+  const el=document.getElementById('painMap');
+  // SVG body outline
+  let svg=`<svg viewBox="0 0 100 85" width="260" style="max-width:100%"><rect x="25" y="2" width="50" height="17" rx="8" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
+    <rect x="18" y="8" width="15" height="30" rx="5" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
+    <rect x="67" y="8" width="15" height="30" rx="5" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
+    <rect x="30" y="18" width="40" height="18" rx="4" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
+    <rect x="22" y="36" width="56" height="14" rx="3" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
+    <rect x="28" y="50" width="18" height="18" rx="4" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
+    <rect x="54" y="50" width="18" height="18" rx="4" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
+    <rect x="30" y="68" width="14" height="15" rx="3" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
+    <rect x="56" y="68" width="14" height="15" rx="3" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>`;
+  BODY_PARTS.forEach(p=>{const isSel=selected&&selected.includes(p.id);svg+=`<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${isSel?'#ef4444':'#d1d1d6'}" stroke="${isSel?'#ef4444':'none'}" stroke-width="2" data-part="${p.id}" style="cursor:pointer" class="pain-dot"/>`});
+  svg+=`</svg>`;
+  el.innerHTML=svg;
+  el.querySelectorAll('circle[data-part]').forEach(c=>{c.addEventListener('click',()=>{const id=c.dataset.part;c.setAttribute('fill',c.getAttribute('fill')==='#ef4444'?'#d1d1d6':'#ef4444');c.setAttribute('stroke',c.getAttribute('stroke')==='#ef4444'?'none':'#ef4444')})});
+}
+function getPainSelections(){const el=document.getElementById('painMap');const selected=[];el.querySelectorAll('circle[data-part]').forEach(c=>{if(c.getAttribute('fill')==='#ef4444')selected.push(c.dataset.part)});return selected}
+
+// ═══════════════════════════════════════════════ MESOCYCLE
+function renderMeso(){
+  const sec=document.getElementById('mesoSection');const today=new Date();today.setHours(0,0,0,0);
+  const active=mesocycles.find(m=>{const s=parseDate(m.start),e=parseDate(m.end);e.setHours(23,59,59,0);return today>=s&&today<=e});
+  if(!active){sec.classList.add('hidden');return}sec.classList.remove('hidden');
+  const start=parseDate(active.start),end=parseDate(active.end);
+  const totalDays=Math.round((end-start)/(864e5))+1;const elapsed=Math.round((today-start)/(864e5))+1;
+  const pct=Math.min(Math.round(elapsed/totalDays*100),100);
+  // Count sessions in mesocycle
+  const sesInBlock=sessions.filter(s=>{const sd=parseDate(s.date);return sd>=start&&sd<=end});
+  const goal=active.goal||300;const weeks=Math.ceil(totalDays/7);
+  const actualSes=sesInBlock.length;const expected=weeks*3;const adh=Math.min(Math.round(actualSes/expected*100),100);
+  document.getElementById('mesoContent').innerHTML=`<div class="flex items-center gap-2 flex-wrap"><span class="font-medium text-[#1c1c1e]">${active.name}</span><span class="text-[#aeaeb2]">${active.start} → ${active.end}</span><span class="text-[#0071e3] font-mono">${pct}%</span></div>
+  <div class="mt-1 h-1.5 bg-[#e5e5ea] rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:${pct}%;background:linear-gradient(90deg,#0071e3,#0095f2)"></div></div>
+  <div class="text-[10px] text-[#8e8e93] mt-1">${actualSes}/${expected} sesiones · Adherencia: ${adh}%</div>`;
+}
+
+// ═══════════════════════════════════════════════ MEASUREMENTS
+function renderMeasurements(){const l=document.getElementById('measurementsList'),e=document.getElementById('emptyMeasurements');if(!measurements.length){l.innerHTML='';e.classList.remove('hidden');return}e.classList.add('hidden');const s=[...measurements].sort((a,b)=>b.date.localeCompare(a.date));l.innerHTML=s.map(m=>{const[,mm,dd]=m.date.split('-');return`<div class="flex items-center gap-3 bg-white rounded-xl px-3 py-2 border border-[#e5e5ea] fade-in"><div class="text-center min-w-[2rem]"><div class="text-xs font-bold">${dd}/${mm}</div></div><div class="flex gap-3 text-xs"><span class="font-mono text-[#0071e3]">${m.weight} kg</span>${m.bodyFat?`<span class="font-mono text-[#8e8e93]">${m.bodyFat}%</span>`:''}${m.waist?`<span class="font-mono text-[#8e8e93]">${m.waist} cm</span>`:''}</div><button onclick="deleteMeasurement('${m.id}')" class="ml-auto p-0.5 hover:text-red-500 transition text-[#aeaeb2]"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></div>`}).join('');renderMeasurementsChart();renderRmChart()}
+function renderMeasurementsChart(){const c=document.getElementById('measurementsChart');if(!c)return;const s=[...measurements].sort((a,b)=>a.date.localeCompare(b.date));if(measChartInstance)measChartInstance.destroy();if(s.length<2)return;measChartInstance=new Chart(c.getContext('2d'),{type:'line',data:{labels:s.map(m=>{const[,mm,dd]=m.date.split('-');return dd+'/'+mm}),datasets:[{label:'Peso (kg)',data:s.map(m=>parseFloat(m.weight)),borderColor:'#0071e3',backgroundColor:'rgba(0,113,227,.08)',borderWidth:2,pointBackgroundColor:'#0071e3',pointRadius:3,tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:2.5,plugins:{legend:{labels:{color:'#8e8e93',font:{size:9}},position:'bottom'},tooltip:{backgroundColor:'#fff',titleColor:'#1c1c1e',bodyColor:'#3a3a3c',borderColor:'#e5e5ea',borderWidth:1,padding:6,bodyFont:{size:9}}},scales:{x:{grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#aeaeb2',font:{size:8}}},y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#aeaeb2',font:{size:8}}}}}})}
+// 1RM Progression Chart
+function renderRmChart(){const c=document.getElementById('rmChart');if(!c)return;
+  const data=[];sessions.filter(s=>s.tipo==='fuerza'&&s.exercises&&s.exercises.length).sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>{s.exercises.forEach(ex=>{if(ex.reps>0&&ex.weight>0){const rm=Math.round(ex.weight*(1+ex.reps/30));data.push({date:s.date,name:ex.name,rm})}})});
+  if(data.length<2){document.getElementById('rmSection').classList.add('hidden');return}document.getElementById('rmSection').classList.remove('hidden');
+  // Group by date for avg RM
+  const groups={};data.forEach(d=>{if(!groups[d.date])groups[d.date]={rms:[]};groups[d.date].rms.push(d.rm)});
+  const labels=Object.keys(groups).sort();const avgData=labels.map(l=>{const rms=groups[l].rms;return Math.round(rms.reduce((a,b)=>a+b,0)/rms.length)});
+  if(rmChartInstance)rmChartInstance.destroy();
+  rmChartInstance=new Chart(c.getContext('2d'),{type:'line',data:{labels:labels.map(l=>{const[,m,d]=l.split('-');return d+'/'+m}),datasets:[{label:'1RM medio (kg)',data:avgData,borderColor:'#34c759',backgroundColor:'rgba(52,199,89,.1)',borderWidth:2,pointBackgroundColor:'#34c759',pointRadius:3,tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:2.5,plugins:{legend:{labels:{color:'#8e8e93',font:{size:9}},position:'bottom'},tooltip:{backgroundColor:'#fff',titleColor:'#1c1c1e',bodyColor:'#3a3a3c',borderColor:'#e5e5ea',borderWidth:1,padding:6,bodyFont:{size:9}}},scales:{x:{grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#aeaeb2',font:{size:8}}},y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},ticks:{color:'#aeaeb2',font:{size:8}}}}}})}
+function deleteMeasurement(id){if(!confirm('¿Eliminar?'))return;measurements=measurements.filter(m=>m.id!==id);saveMeasurements();renderMeasurements()}
 function openMeasForm(){document.getElementById('measOverlay').classList.remove('hidden');document.getElementById('measForm').mdate.value=todayStr()}
 function closeMeasForm(){document.getElementById('measOverlay').classList.add('hidden')}
-function renderDashboard(){const t=new Date();t.setHours(23,59,59,0);const wa=new Date(t);wa.setDate(wa.getDate()-7);let ws=0,wv=0;sessions.forEach(s=>{const sd=parseDate(s.date);if(sd>=wa&&sd<=t){ws++;wv+=parseInt(s.volume)||0}});document.getElementById('dashWeeklySessions').textContent=ws+' sesiones';document.getElementById('dashWeeklyVolume').textContent=wv+' min';document.getElementById('dashGoalValue').textContent=weeklyGoal+' min';const p=Math.min(Math.round((wv/weeklyGoal)*100),100);document.getElementById('dashGoalPercent').textContent=p+'%';document.getElementById('dashGoalBar').style.width=p+'%';const sorted=[...sessions].sort((a,b)=>b.date.localeCompare(a.date));let lastDay=null;if(sorted.length){const ud=[...new Set(sorted.map(s=>s.date))].sort((a,b)=>b.localeCompare(a));lastDay=ud[0]}if(lastDay){const diff=Math.round((t-parseDate(lastDay))/(864e5));document.getElementById('dashRestDays').textContent=diff+' día'+(diff!==1?'s':'');document.getElementById('dashRestLabel').textContent='sin entrenar'}else{document.getElementById('dashRestDays').textContent='—';document.getElementById('dashRestLabel').textContent='sin datos'}const tv=sessions.reduce((a,s)=>a+(parseInt(s.volume)||0),0);document.getElementById('dashTotalVolume').textContent=tv+' min';document.getElementById('dashTotalSessions').textContent=sessions.length+' sesiones';const bt={};sessions.forEach(s=>{if(!bt[s.tipo])bt[s.tipo]=[];bt[s.tipo].push(s)});const el=document.getElementById('dashTypeBreakdown'),keys=Object.keys(bt).sort((a,b)=>bt[b].length-bt[a].length),mc=keys.length?bt[keys[0]].length:1;el.innerHTML=keys.map(k=>{const t=getTipo(k),ss=bt[k],s=getStats(ss),pw=Math.round((ss.length/mc)*100);return`<div class="flex items-center gap-2 text-xs"><span class="type-badge ${t.badge} border min-w-[60px]">${t.label}</span><div class="flex-1 h-2 bg-[#f2f2f7] rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:${pw}%;background:${t.color}"></div></div><span class="font-mono text-[#3a3a3c] w-8 text-right">${ss.length}</span><span class="font-mono text-[#8e8e93] w-14 text-right">${s.vol} min</span></div>`}).join('')}
-function exportCsv(){if(!sessions.length){alert('No hay sesiones.');return}const r=[['Fecha','Tipo','Vol(min)','RPE','sRPE(UA)','Tags','Notas']];sessions.sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>{const t=getTipo(s.tipo);r.push([s.date,t.label,s.volume,s.intensity,srpe(s),(s.tags||[]).join(';'),'"'+(s.notes||'').replace(/"/g,'""')+'"'])});const csv=r.map(r=>r.join(',')).join('\n');const b=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='entrenamiento-historial.csv';a.click();URL.revokeObjectURL(a.href)}
-function exportPdf(){const ms=sessionsForMonth(currentYear,currentMonth).sort((a,b)=>a.date.localeCompare(b.date));if(!ms.length){alert('No hay sesiones este mes.');return}const{jsPDF}=window.jspdf;const doc=new jsPDF('p','mm','a4');doc.setFillColor(242,242,247);doc.rect(0,0,210,297,'F');doc.setFont('helvetica','bold');doc.setFontSize(20);doc.setTextColor(0,113,227);doc.text('Diario de Entrenamiento',105,22,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(12);doc.setTextColor(62,62,66);doc.text(MONTHS[currentMonth]+' '+currentYear,105,31,{align:'center'});const s=getStats(ms);doc.setFontSize(8);doc.setTextColor(142,142,147);doc.text('Sesiones: '+s.count+'  •  Vol: '+s.vol+' min  •  RPE: '+s.avgInt+'  •  sRPE: '+s.srpe+' UA',105,39,{align:'center'});doc.autoTable({head:[['Fecha','Tipo','Vol','RPE','sRPE','Notas']],body:ms.map(s=>{const t=getTipo(s.tipo);const[y,m,d]=s.date.split('-');return[`${d}/${m}`,t.label,`${s.volume}min`,s.intensity+'/10',srpe(s)+'UA',s.notes||'—']}),startY:44,theme:'grid',styles:{font:'helvetica',fontSize:7,textColor:[28,28,30],fillColor:[255,255,255],lineColor:[229,229,234],lineWidth:0.2,cellPadding:{top:2,right:2,bottom:2,left:2}},headStyles:{fillColor:[0,113,227],textColor:[255,255,255],fontStyle:'bold',fontSize:7},alternateRowStyles:{fillColor:[242,242,247]},columnStyles:{0:{cellWidth:16},1:{cellWidth:35},2:{cellWidth:14,halign:'center'},3:{cellWidth:12,halign:'center'},4:{cellWidth:16,halign:'center'},5:{cellWidth:'auto'}},margin:{top:44,right:12,left:12}});const pc=doc.internal.getNumberOfPages();for(let i=1;i<=pc;i++){doc.setPage(i);doc.setFontSize(6);doc.setTextColor(174,174,178);doc.text('diario-entrenamiento — '+new Date().toLocaleDateString('es-ES'),105,290,{align:'center'})}doc.save('entrenamiento-'+MONTHS[currentMonth].toLowerCase()+'-'+currentYear+'.pdf')}
-function exportAllPdf(){if(!sessions.length){alert('No hay sesiones.');return}const{jsPDF}=window.jspdf;const doc=new jsPDF('p','mm','a4');doc.setFillColor(242,242,247);doc.rect(0,0,210,297,'F');doc.setFont('helvetica','bold');doc.setFontSize(20);doc.setTextColor(0,113,227);doc.text('Diario de Entrenamiento',105,18,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(142,142,147);doc.text('Historial completo',105,26,{align:'center'});const st=getStats(sessions);doc.setFontSize(8);doc.setTextColor(142,142,147);doc.text('Total: '+st.count+' ses  •  '+st.vol+' min  •  sRPE: '+st.srpe+' UA  •  RPE media: '+st.avgInt,105,33,{align:'center'});let y=38;doc.setFontSize(7);doc.setTextColor(0,113,227);doc.setFont('helvetica','bold');doc.text('Resumen por tipo:',14,y);y+=4;doc.setFont('helvetica','normal');doc.setTextColor(62,62,66);const bt={};sessions.forEach(s=>{if(!bt[s.tipo])bt[s.tipo]=[];bt[s.tipo].push(s)});Object.keys(bt).sort().forEach(k=>{const t=getTipo(k),ss=bt[k],s=getStats(ss);doc.text('• '+t.label+': '+s.count+' ses, '+s.vol+' min, RPE '+s.avgInt+', '+s.srpe+' UA',16,y);y+=4});y=Math.max(y+3,38+Object.keys(bt).length*4+8);const sorted=[...sessions].sort((a,b)=>a.date.localeCompare(b.date));doc.autoTable({head:[['Fecha','Tipo','Vol','RPE','sRPE','Notas']],body:sorted.map(s=>{const t=getTipo(s.tipo);const[y,m,d]=s.date.split('-');const f=parseDate(s.date);return[`${d}/${m} ${DAYS[f.getDay()]}`,t.label,`${s.volume}min`,s.intensity+'/10',srpe(s)+'UA',s.notes||'—']}),startY:y,theme:'grid',styles:{font:'helvetica',fontSize:6.5,textColor:[28,28,30],fillColor:[255,255,255],lineColor:[229,229,234],lineWidth:0.2,cellPadding:{top:2,right:2,bottom:2,left:2}},headStyles:{fillColor:[0,113,227],textColor:[255,255,255],fontStyle:'bold',fontSize:6.5},alternateRowStyles:{fillColor:[242,242,247]},columnStyles:{0:{cellWidth:18},1:{cellWidth:30},2:{cellWidth:13,halign:'center'},3:{cellWidth:11,halign:'center'},4:{cellWidth:15,halign:'center'},5:{cellWidth:'auto'}},margin:{top:y,right:12,left:12}});const pc=doc.internal.getNumberOfPages();for(let i=1;i<=pc;i++){doc.setPage(i);doc.setFontSize(6);doc.setTextColor(174,174,178);doc.text('diario-entrenamiento — '+new Date().toLocaleDateString('es-ES'),105,290,{align:'center'})}doc.save('entrenamiento-historial-completo.pdf')}
+
+// ═══════════════════════════════════════════════ DASHBOARD
+function renderDashboard(){
+  const t=new Date();t.setHours(23,59,59,0);const wa=new Date(t);wa.setDate(wa.getDate()-7);let ws=0,wv=0;
+  sessions.forEach(s=>{const sd=parseDate(s.date);if(sd>=wa&&sd<=t){ws++;wv+=parseInt(s.volume)||0}});
+  document.getElementById('dashWeeklySessions').textContent=ws+' ses';document.getElementById('dashWeeklyVolume').textContent=wv+' min';
+  document.getElementById('dashGoalValue').textContent=weeklyGoal+' min';const p=Math.min(Math.round((wv/weeklyGoal)*100),100);
+  document.getElementById('dashGoalPercent').textContent=p+'%';document.getElementById('dashGoalBar').style.width=p+'%';
+  const sorted=[...sessions].sort((a,b)=>b.date.localeCompare(a.date));let lastDay=null;
+  if(sorted.length){const ud=[...new Set(sorted.map(s=>s.date))].sort((a,b)=>b.localeCompare(a));lastDay=ud[0]}
+  if(lastDay){const diff=Math.round((t-parseDate(lastDay))/(864e5));document.getElementById('dashRestDays').textContent=diff+' día'+(diff!==1?'s':'');document.getElementById('dashRestLabel').textContent='sin entrenar'}
+  else{document.getElementById('dashRestDays').textContent='—';document.getElementById('dashRestLabel').textContent='sin datos'}
+  const tv=sessions.reduce((a,s)=>a+(parseInt(s.volume)||0),0);
+  document.getElementById('dashTotalVolume').textContent=tv+' min';document.getElementById('dashTotalSessions').textContent=sessions.length+' ses';
+  // Type breakdown
+  const bt={};sessions.forEach(s=>{if(!bt[s.tipo])bt[s.tipo]=[];bt[s.tipo].push(s)});
+  const el=document.getElementById('dashTypeBreakdown'),keys=Object.keys(bt).sort((a,b)=>bt[b].length-bt[a].length),mc=keys.length?bt[keys[0]].length:1;
+  el.innerHTML=keys.map(k=>{const t=getTipo(k),ss=bt[k],s=gStats(ss),pw=Math.round((ss.length/mc)*100);return`<div class="flex items-center gap-2 text-xs"><span class="type-badge ${t.badge} border min-w-[60px]">${t.label}</span><div class="flex-1 h-2 bg-[#f2f2f7] rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:${pw}%;background:${t.color}"></div></div><span class="font-mono text-[#3a3a3c] w-8 text-right">${ss.length}</span><span class="font-mono text-[#8e8e93] w-14 text-right">${s.vol} min</span></div>`}).join('');
+  // Wellness weekly
+  const dw=document.getElementById('dashWellness');
+  const w7=wellness.filter(w=>{const d=parseDate(w.date);return d>=wa&&d<=t}).sort((a,b)=>a.date.localeCompare(b.date));
+  if(w7.length){dw.innerHTML=w7.map(w=>{const score=Math.round((w.sleep+w.nutrition+(7-w.stress)+(7-w.fatigue))/4*10)/10;return`<div class="flex items-center gap-2"><span class="font-mono text-[#8e8e93]">${w.date.slice(5)}</span><span class="font-mono text-[#0071e3] font-bold">${score}</span><span class="text-[#aeaeb2]">S${w.sleep} N${w.nutrition} E${w.stress} F${w.fatigue}</span></div>`}).join('')}
+  else{dw.innerHTML='<span class="text-[#aeaeb2]">Sin datos esta semana</span>'}
+  // Mesocycle adherence
+  const ad=document.getElementById('dashAdherence');
+  const today=new Date();today.setHours(0,0,0,0);
+  const activeM=mesocycles.find(m=>{const s=parseDate(m.start),e=parseDate(m.end);e.setHours(23,59,59,0);return today>=s&&today<=e});
+  if(activeM){const start=parseDate(activeM.start),end=parseDate(activeM.end);const sesInBlock=sessions.filter(s=>{const sd=parseDate(s.date);return sd>=start&&sd<=end});const weeks=Math.ceil((end-start)/(864e5*7));const expected=weeks*3;const adh=Math.min(Math.round(sesInBlock.length/expected*100),100);ad.innerHTML=`<div class="flex items-center gap-2"><span class="font-medium text-[#1c1c1e]">${activeM.name}</span><span class="text-[#0071e3] font-mono">${adh}%</span><span class="text-[#aeaeb2]">${sesInBlock.length}/${expected} ses</span></div>`}
+  else{ad.innerHTML='<span class="text-[#aeaeb2]">Sin mesociclo activo</span>'}
+}
+
+// ═══════════════════════════════════════════════ CSV + PDF
+function exportCsv(){if(!sessions.length){alert('No hay sesiones.');return}const r=[['Fecha','Tipo','Vol(min)','RPE','sRPE(UA)','Tags','Notas']];sessions.sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>{const t=getTipo(s.tipo);r.push([s.date,t.label,s.volume,s.intensity,srpe(s),(s.tags||[]).join(';'),'"'+(s.notes||'').replace(/"/g,'""')+'"'])});const csv=r.map(r=>r.join(',')).join('\n');const b=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='entrenamiento-'+activeProfile.name+'.csv';a.click();URL.revokeObjectURL(a.href)}
+function exportPdf(){const ms=sfM(currentYear,currentMonth).sort((a,b)=>a.date.localeCompare(b.date));if(!ms.length){alert('No hay sesiones este mes.');return}const{jsPDF}=window.jspdf;const doc=new jsPDF('p','mm','a4');doc.setFillColor(242,242,247);doc.rect(0,0,210,297,'F');doc.setFont('helvetica','bold');doc.setFontSize(20);doc.setTextColor(0,113,227);doc.text('Diario de Entrenamiento — '+activeProfile.name,105,22,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(12);doc.setTextColor(62,62,66);doc.text(MONTHS[currentMonth]+' '+currentYear,105,31,{align:'center'});const s=gStats(ms);doc.setFontSize(8);doc.setTextColor(142,142,147);doc.text('Ses: '+s.count+'  Vol: '+s.vol+' min  RPE: '+s.avgInt+'  sRPE: '+s.srpe+' UA',105,39,{align:'center'});doc.autoTable({head:[['Fecha','Tipo','Vol','RPE','sRPE','Notas']],body:ms.map(s=>{const t=getTipo(s.tipo);const[y,m,d]=s.date.split('-');return[`${d}/${m}`,t.label,`${s.volume}min`,s.intensity+'/10',srpe(s)+'UA',s.notes||'—']}),startY:44,theme:'grid',styles:{font:'helvetica',fontSize:7,textColor:[28,28,30],fillColor:[255,255,255],lineColor:[229,229,234],lineWidth:.2,cellPadding:{top:2,right:2,bottom:2,left:2}},headStyles:{fillColor:[0,113,227],textColor:[255,255,255],fontStyle:'bold',fontSize:7},alternateRowStyles:{fillColor:[242,242,247]},columnStyles:{0:{cellWidth:16},1:{cellWidth:35},2:{cellWidth:14,halign:'center'},3:{cellWidth:12,halign:'center'},4:{cellWidth:16,halign:'center'},5:{cellWidth:'auto'}},margin:{top:44,right:12,left:12}});const pc=doc.internal.getNumberOfPages();for(let i=1;i<=pc;i++){doc.setPage(i);doc.setFontSize(6);doc.setTextColor(174,174,178);doc.text(activeProfile.name+' — '+new Date().toLocaleDateString('es-ES'),105,290,{align:'center'})}doc.save('entrenamiento-'+MONTHS[currentMonth].toLowerCase()+'-'+currentYear+'.pdf')}
+function exportAllPdf(){if(!sessions.length){alert('No hay sesiones.');return}const{jsPDF}=window.jspdf;const doc=new jsPDF('p','mm','a4');doc.setFillColor(242,242,247);doc.rect(0,0,210,297,'F');doc.setFont('helvetica','bold');doc.setFontSize(20);doc.setTextColor(0,113,227);doc.text('Diario de Entrenamiento — '+activeProfile.name,105,18,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(142,142,147);doc.text('Historial completo',105,26,{align:'center'});const st=gStats(sessions);doc.setFontSize(8);doc.setTextColor(142,142,147);doc.text('Total: '+st.count+' ses  '+st.vol+' min  sRPE: '+st.srpe+' UA  RPE: '+st.avgInt,105,33,{align:'center'});let y=38;doc.setFontSize(7);doc.setTextColor(0,113,227);doc.setFont('helvetica','bold');doc.text('Resumen por tipo:',14,y);y+=4;doc.setFont('helvetica','normal');doc.setTextColor(62,62,66);const bt={};sessions.forEach(s=>{if(!bt[s.tipo])bt[s.tipo]=[];bt[s.tipo].push(s)});Object.keys(bt).sort().forEach(k=>{const t=getTipo(k),ss=bt[k],s=gStats(ss);doc.text('• '+t.label+': '+s.count+' ses, '+s.vol+' min, RPE '+s.avgInt+', '+s.srpe+' UA',16,y);y+=4});y=Math.max(y+3,38+Object.keys(bt).length*4+8);const sorted=[...sessions].sort((a,b)=>a.date.localeCompare(b.date));doc.autoTable({head:[['Fecha','Tipo','Vol','RPE','sRPE','Notas']],body:sorted.map(s=>{const t=getTipo(s.tipo);const[y,m,d]=s.date.split('-');const f=parseDate(s.date);return[`${d}/${m} ${DAYS[f.getDay()]}`,t.label,`${s.volume}min`,s.intensity+'/10',srpe(s)+'UA',s.notes||'—']}),startY:y,theme:'grid',styles:{font:'helvetica',fontSize:6.5,textColor:[28,28,30],fillColor:[255,255,255],lineColor:[229,229,234],lineWidth:.2,cellPadding:{top:2,right:2,bottom:2,left:2}},headStyles:{fillColor:[0,113,227],textColor:[255,255,255],fontStyle:'bold',fontSize:6.5},alternateRowStyles:{fillColor:[242,242,247]},columnStyles:{0:{cellWidth:18},1:{cellWidth:30},2:{cellWidth:13,halign:'center'},3:{cellWidth:11,halign:'center'},4:{cellWidth:15,halign:'center'},5:{cellWidth:'auto'}},margin:{top:y,right:12,left:12}});const pc=doc.internal.getNumberOfPages();for(let i=1;i<=pc;i++){doc.setPage(i);doc.setFontSize(6);doc.setTextColor(174,174,178);doc.text(activeProfile.name+' — '+new Date().toLocaleDateString('es-ES'),105,290,{align:'center'})}doc.save('entrenamiento-historial-completo.pdf')}
+
+// ═══════════════════════════════════════════════ NAV
 function prevMonth(){currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--}renderCalendar()}
 function nextMonth(){currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++}renderCalendar()}
-function switchTab(t){['diarySection','measurementsSection','dashboardSection'].forEach(id=>document.getElementById(id).classList.add('hidden'));['navTabDiary','navTabMeasurements','navTabDashboard'].forEach(id=>document.getElementById(id).classList.remove('active','text-[#0071e3]','font-semibold'));document.getElementById(t+'Section').classList.remove('hidden');document.getElementById('navTab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.add('active','text-[#0071e3]','font-semibold');if(t==='measurements')renderMeasurements();if(t==='dashboard')renderDashboard();window.dispatchEvent(new Event('resize'))}
-function setupGoal(){const b=document.getElementById('dashGoalValue');b.style.cursor='pointer';b.title='Click para cambiar objetivo';b.addEventListener('click',()=>{const v=prompt('Objetivo semanal (minutos):',weeklyGoal);if(v&&!isNaN(v)&&parseInt(v)>0){saveGoal(parseInt(v));renderDashboard()}})}
-document.addEventListener('DOMContentLoaded',()=>{loadData();const n=new Date();currentYear=n.getFullYear();currentMonth=n.getMonth();
-  document.getElementById('navTabDiary').addEventListener('click',()=>switchTab('diary'));document.getElementById('navTabMeasurements').addEventListener('click',()=>switchTab('measurements'));document.getElementById('navTabDashboard').addEventListener('click',()=>switchTab('dashboard'));
+function switchTab(t){['diarySection','measSection','dashSection'].forEach(id=>document.getElementById(id).style.display='none');['navDiary','navMeas','navDash'].forEach(id=>{const el=document.getElementById(id);el.className='text-[.75rem] font-medium text-[#8e8e93] hover:text-[#3a3a3c] px-3 py-1.5'});document.getElementById(t+'Section').style.display='';const el=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));el.className='text-[.75rem] font-semibold text-[#0071e3] px-3 py-1.5';el.style.borderBottom='3px solid #0071e3';if(t==='meas')renderMeasurements();if(t==='dash')renderDashboard();window.dispatchEvent(new Event('resize'))}
+function setupGoal(){const b=document.getElementById('dashGoalValue');b.style.cursor='pointer';b.title='Click para cambiar objetivo';b.addEventListener('click',()=>{const v=prompt('Objetivo semanal (min):',weeklyGoal);if(v&&!isNaN(v)&&parseInt(v)>0){saveGoal(parseInt(v));renderDashboard()}})}
+function fullRender(){renderLegend();renderCalendar();renderDashboard()}
+
+// ═══════════════════════════════════════════════ INIT
+document.addEventListener('DOMContentLoaded',()=>{
+  // Profile system init
+  const po=document.getElementById('profileOverlay');
+  document.querySelectorAll('#avatarPicker .avatar-btn').forEach(b=>b.addEventListener('click',function(){document.querySelectorAll('#avatarPicker .avatar-btn').forEach(x=>x.classList.remove('active'));this.classList.add('active')}));
+  document.getElementById('createProfileBtn').addEventListener('click',()=>{const name=document.getElementById('profileNameInput').value.trim();if(!name){alert('Introduce un nombre');return}const avatar=document.querySelector('#avatarPicker .avatar-btn.active')?.dataset.a||'🏃';const id='p_'+Date.now().toString(36);const profile={id,name,avatar};profiles.push(profile);activeProfile=profile;saveProfiles();localStorage.setItem(ACTIVE_KEY,id);hideProfileCreate();renderProfiles();loadData();fullRender()});
+  loadData();
+  const now=new Date();currentYear=now.getFullYear();currentMonth=now.getMonth();
+
+  if(!activeProfile){po.style.display='flex';return}
+
+  // Tab nav
+  document.getElementById('navDiary').addEventListener('click',()=>switchTab('diary'));document.getElementById('navMeas').addEventListener('click',()=>switchTab('meas'));document.getElementById('navDash').addEventListener('click',()=>switchTab('dash'));
   document.getElementById('prevMonth').addEventListener('click',prevMonth);document.getElementById('nextMonth').addEventListener('click',nextMonth);document.getElementById('btnNewSession').addEventListener('click',()=>openForm(todayStr()));document.getElementById('btnExportPdf').addEventListener('click',exportPdf);document.getElementById('btnExportAllPdf').addEventListener('click',exportAllPdf);document.getElementById('btnExportCsv').addEventListener('click',exportCsv);document.getElementById('btnNewMeasurement').addEventListener('click',openMeasForm);
   document.getElementById('confirmDelete').addEventListener('click',executeDelete);document.getElementById('confirmCancel').addEventListener('click',closeConfirm);document.getElementById('confirmOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeConfirm()});
   document.getElementById('measForm').addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(e.target);const m={id:Date.now().toString(36),date:fd.get('mdate'),weight:parseFloat(fd.get('weight'))||0,bodyFat:fd.get('bodyFat')?parseFloat(fd.get('bodyFat')):null,waist:fd.get('waist')?parseFloat(fd.get('waist')):null};if(!m.weight)return;measurements.push(m);saveMeasurements();closeMeasForm();renderMeasurements()});
-  setupSearch();setupGoal();renderLegend();renderCalendar();renderDashboard();switchTab('diary')});
+  // Wellness
+  document.getElementById('btnWellness').addEventListener('click',()=>{document.getElementById('wellnessOverlay').classList.remove('hidden');renderPainMap(null)});
+  document.getElementById('wellnessForm').addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(e.target);const pain=getPainSelections();const entry={date:todayStr(),sleep:parseInt(fd.get('sleep')),nutrition:parseInt(fd.get('nutrition')),stress:parseInt(fd.get('stress')),fatigue:parseInt(fd.get('fatigue')),pain};const idx=wellness.findIndex(w=>w.date===entry.date);if(idx>-1)wellness[idx]=entry;else wellness.push(entry);saveWellness();document.getElementById('wellnessOverlay').classList.add('hidden');renderWellness()});
+  // Mesocycle
+  document.getElementById('btnMeso').addEventListener('click',()=>{document.getElementById('mesoOverlay').classList.remove('hidden');const m=mesocycles[mesocycles.length-1];if(m){document.getElementById('mesoForm').name.value=m.name;document.getElementById('mesoForm').start.value=m.start;document.getElementById('mesoForm').end.value=m.end;document.getElementById('mesoForm').goal.value=m.goal||''}else{const today=new Date();const end=new Date(today);end.setDate(end.getDate()+28);document.getElementById('mesoForm').start.value=fmt(today);document.getElementById('mesoForm').end.value=fmt(end);document.getElementById('mesoForm').goal.value='300'}});
+  document.getElementById('mesoForm').addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(e.target);const entry={name:fd.get('name'),start:fd.get('start'),end:fd.get('end'),goal:parseInt(fd.get('goal'))||300};const last=mesocycles[mesocycles.length-1];if(last&&last.name===entry.name){mesocycles[mesocycles.length-1]=entry}else{mesocycles.push(entry)}saveMesocycles();document.getElementById('mesoOverlay').classList.add('hidden');renderMeso()});
+  document.getElementById('btnDeleteMeso').addEventListener('click',()=>{if(!confirm('Eliminar mesociclo?'))return;mesocycles.pop();saveMesocycles();document.getElementById('mesoOverlay').classList.add('hidden');renderMeso()});
+  function closeWellnessForm(){document.getElementById('wellnessOverlay').classList.add('hidden')}
+  window.closeWellnessForm=closeWellnessForm;
+  function closeMesoForm(){document.getElementById('mesoOverlay').classList.add('hidden')}
+  window.closeMesoForm=closeMesoForm;
+  window.closeMeasForm=closeMeasForm;
+  renderProfiles();setupSearch();setupGoal();renderLegend();renderCalendar();renderDashboard();switchTab('diary')
+});
 </script>
 </body>
 </html>
