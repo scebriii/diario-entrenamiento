@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diario de Entrenamiento</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Inter', system-ui, sans-serif; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #1a1a2e; }
+    ::-webkit-scrollbar-thumb { background: #f59e0b; border-radius: 3px; }
+
+    .rpe-dot { transition: transform 0.2s; }
+    .rpe-dot:hover { transform: scale(1.3); }
+
+    .cal-cell { transition: background 0.15s; cursor: pointer; min-height: 64px; }
+    .cal-cell:hover { background: rgba(245,158,11,0.08); }
+    .cal-cell.has-session { border-bottom: 3px solid; }
+    .cal-cell.today { background: rgba(245,158,11,0.12); }
+
+    .type-badge { font-size: 0.65rem; padding: 1px 5px; border-radius: 999px; white-space: nowrap; }
+
+    .slide-panel { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+    .slide-panel.open { transform: translateX(0); }
+
+    .fade-in { animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 640px) {
+      .cal-cell { min-height: 48px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body class="bg-[#0f0f1a] text-gray-100 antialiased">
+
+<div id="app" class="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
+
+  <!-- HEADER -->
+  <header class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+        <span class="text-amber-400">⛰️</span>
+        <span class="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">Diario</span>
+        <span class="text-gray-300">Entrenamiento</span>
+      </h1>
+      <p class="text-xs text-gray-500 mt-0.5">Registro personal CAFYD</p>
+    </div>
+    <div class="flex gap-2">
+      <button id="btnExportPdf" class="text-xs bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span class="hidden sm:inline">Exportar PDF</span>
+      </button>
+      <button id="btnNewSession" class="text-xs bg-amber-500 hover:bg-amber-600 text-black font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-amber-500/20">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span class="hidden sm:inline">Nueva sesión</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- CALENDAR -->
+  <section class="bg-[#16162a] rounded-2xl border border-gray-800/60 p-3 sm:p-5 mb-4">
+    <div class="flex items-center justify-between mb-4">
+      <button id="prevMonth" class="p-2 hover:bg-gray-800 rounded-lg transition text-gray-400 hover:text-amber-400">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <h2 id="monthTitle" class="text-lg sm:text-xl font-bold text-gray-100"></h2>
+      <button id="nextMonth" class="p-2 hover:bg-gray-800 rounded-lg transition text-gray-400 hover:text-amber-400">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+
+    <!-- Day-of-week headers -->
+    <div class="grid grid-cols-7 mb-1 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+      <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
+    </div>
+
+    <!-- Calendar grid -->
+    <div id="calendarGrid" class="grid grid-cols-7 gap-px bg-gray-800/30 rounded-xl overflow-hidden"></div>
+
+    <!-- Legend -->
+    <div id="legendRow" class="flex flex-wrap gap-2 mt-3 text-[10px] text-gray-400"></div>
+  </section>
+
+  <!-- SESSION LIST -->
+  <section class="bg-[#16162a] rounded-2xl border border-gray-800/60 p-3 sm:p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+      <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Sesiones del mes
+    </h3>
+    <div id="sessionList" class="space-y-1.5"></div>
+    <div id="emptyMonth" class="hidden text-center py-6 text-gray-600 text-sm">
+      <svg class="w-10 h-10 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      No hay sesiones registradas este mes
+    </div>
+  </section>
+
+  <!-- STATS ROW -->
+  <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+    <div class="bg-[#16162a] rounded-xl border border-gray-800/60 p-3 text-center">
+      <div class="text-xs text-gray-500 mb-1">Sesiones</div>
+      <div id="statSessions" class="text-xl font-bold text-amber-400">0</div>
+    </div>
+    <div class="bg-[#16162a] rounded-xl border border-gray-800/60 p-3 text-center">
+      <div class="text-xs text-gray-500 mb-1">Volumen total</div>
+      <div id="statVolume" class="text-xl font-bold text-amber-400">0 min</div>
+    </div>
+    <div class="bg-[#16162a] rounded-xl border border-gray-800/60 p-3 text-center">
+      <div class="text-xs text-gray-500 mb-1">Intensidad media</div>
+      <div id="statAvgIntensity" class="text-xl font-bold text-amber-400">—</div>
+    </div>
+    <div class="bg-[#16162a] rounded-xl border border-gray-800/60 p-3 text-center">
+      <div class="text-xs text-gray-500 mb-1">Media/sesión</div>
+      <div id="statAvgVolume" class="text-xl font-bold text-amber-400">—</div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ===== SIDE PANEL / MODAL ===== -->
+<div id="panelOverlay" class="fixed inset-0 bg-black/60 z-40 hidden transition-opacity" onclick="closePanel()"></div>
+
+<div id="sidePanel" class="slide-panel fixed top-0 right-0 h-full w-full sm:w-[420px] bg-[#16162a] border-l border-gray-800 z-50 overflow-y-auto transform translate-x-full shadow-2xl">
+  <div class="p-5">
+    <div class="flex items-center justify-between mb-5">
+      <h3 id="panelTitle" class="text-lg font-bold text-gray-100"></h3>
+      <button onclick="closePanel()" class="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-amber-400 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="panelBody"></div>
+  </div>
+</div>
+
+<!-- ============ JAVASCRIPT ============ -->
+<script>
+// ---------------------------------------------------------------
+// DATA
+// ---------------------------------------------------------------
+const STORAGE_KEY = 'diario_entrenamiento_sessions';
+
+const TIPOS = [
+  { id: 'fuerza', label: 'Fuerza', color: '#ef4444', bg: 'bg-red-500/15 text-red-400 border-red-500/30' },
+  { id: 'cardio', label: 'Resistencia / Cardio', color: '#3b82f6', bg: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
+  { id: 'tecnica', label: 'Técnica', color: '#22c55e', bg: 'bg-green-500/15 text-green-400 border-green-500/30' },
+  { id: 'velocidad', label: 'Velocidad', color: '#a855f7', bg: 'bg-purple-500/15 text-purple-400 border-purple-500/30' },
+  { id: 'flexibilidad', label: 'Flexibilidad / Movilidad', color: '#14b8a6', bg: 'bg-teal-500/15 text-teal-400 border-teal-500/30' },
+  { id: 'partido', label: 'Partido / Competición', color: '#f59e0b', bg: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+  { id: 'recuperacion', label: 'Recuperación activa', color: '#64748b', bg: 'bg-slate-500/15 text-slate-300 border-slate-500/30' },
+];
+
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAYS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+let sessions = [];
+let currentDate = new Date();
+let currentYear = currentDate.getFullYear();
+let currentMonth = currentDate.getMonth();
+let editingId = null;
+
+// ---------------------------------------------------------------
+// STORAGE
+// ---------------------------------------------------------------
+function loadSessions() {
+  try {
+    sessions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch { sessions = []; }
+}
+
+function saveSessions() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+}
+
+// ---------------------------------------------------------------
+// HELPERS
+// ---------------------------------------------------------------
+function getTipo(id) { return TIPOS.find(t => t.id === id) || TIPOS[0]; }
+
+function formatDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function parseDate(str) {
+  const [y,m,d] = str.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+
+function todayStr() { return formatDate(new Date()); }
+
+function sessionsForMonth(year, month) {
+  const prefix = `${year}-${String(month+1).padStart(2,'0')}`;
+  return sessions.filter(s => s.date.startsWith(prefix));
+}
+
+function getStats(sessions) {
+  const count = sessions.length;
+  const vol = sessions.reduce((a,s) => a + (parseInt(s.volume)||0), 0);
+  const avgInt = count ? (sessions.reduce((a,s) => a + (parseInt(s.intensity)||0), 0) / count) : 0;
+  const avgVol = count ? Math.round(vol / count) : 0;
+  return { count, vol, avgInt: avgInt.toFixed(1), avgVol };
+}
+
+// ---------------------------------------------------------------
+// LEGEND
+// ---------------------------------------------------------------
+function renderLegend() {
+  const el = document.getElementById('legendRow');
+  el.innerHTML = TIPOS.map(t =>
+    `<span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full" style="background:${t.color}"></span>${t.label}</span>`
+  ).join('');
+}
+
+// ---------------------------------------------------------------
+// CALENDAR
+// ---------------------------------------------------------------
+function renderCalendar() {
+  const grid = document.getElementById('calendarGrid');
+  const title = document.getElementById('monthTitle');
+  title.textContent = `${MONTHS[currentMonth]} ${currentYear}`;
+
+  const firstDay = new Date(currentYear, currentMonth, 1);
+  // Monday = 0 index for our grid
+  let startDow = firstDay.getDay(); // 0=Sun
+  startDow = startDow === 0 ? 6 : startDow - 1; // convert to Mon=0
+
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const monthSessions = sessionsForMonth(currentYear, currentMonth);
+  const today = todayStr();
+
+  // Build day->session map
+  const dayMap = {};
+  monthSessions.forEach(s => {
+    const d = parseInt(s.date.split('-')[2], 10);
+    if (!dayMap[d]) dayMap[d] = [];
+    dayMap[d].push(s);
+  });
+
+  let html = '';
+  // Empty cells before first day
+  for (let i = 0; i < startDow; i++) {
+    html += `<div class="cal-cell bg-transparent"></div>`;
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const daySessions = dayMap[d] || [];
+    const isToday = dateStr === today;
+    const hasSession = daySessions.length > 0;
+    const firstColor = hasSession ? getTipo(daySessions[0].tipo).color : '';
+
+    let cellClasses = 'cal-cell bg-[#1c1c36] p-1 sm:p-1.5 flex flex-col';
+    if (isToday) cellClasses += ' today';
+    if (hasSession) cellClasses += ' has-session';
+
+    let badges = '';
+    if (hasSession) {
+      const shown = daySessions.slice(0, 2);
+      const extra = daySessions.length - 2;
+      badges = '<div class="flex gap-0.5 mt-0.5">' +
+        shown.map(s => `<span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full" style="background:${getTipo(s.tipo).color}"></span>`).join('') +
+        (extra > 0 ? `<span class="text-[8px] text-gray-500 ml-0.5">+${extra}</span>` : '') +
+        '</div>';
+    }
+
+    html += `<div class="${cellClasses}" style="${hasSession ? 'border-bottom-color:'+firstColor : ''}" data-date="${dateStr}">
+      <span class="text-xs sm:text-sm font-medium ${isToday ? 'text-amber-400' : hasSession ? 'text-gray-200' : 'text-gray-500'}">${d}</span>
+      ${badges}
+    </div>`;
+  }
+
+  grid.innerHTML = html;
+
+  // Click handlers on cells
+  grid.querySelectorAll('.cal-cell[data-date]').forEach(el => {
+    el.addEventListener('click', () => {
+      const date = el.dataset.date;
+      const daySessions = sessions.filter(s => s.date === date);
+      if (daySessions.length > 0) {
+        showDayDetail(date, daySessions);
+      } else {
+        openForm(date);
+      }
+    });
+  });
+
+  renderSessionList();
+  renderStats();
+}
+
+// ---------------------------------------------------------------
+// SESSION LIST
+// ---------------------------------------------------------------
+function renderSessionList() {
+  const el = document.getElementById('sessionList');
+  const empty = document.getElementById('emptyMonth');
+  const monthSessions = sessionsForMonth(currentYear, currentMonth)
+    .sort((a,b) => b.date.localeCompare(a.date));
+
+  if (monthSessions.length === 0) {
+    el.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  el.innerHTML = monthSessions.map(s => {
+    const tipo = getTipo(s.tipo);
+    const fecha = parseDate(s.date);
+    const diaSem = DAYS[fecha.getDay()];
+    const [y,m,d] = s.date.split('-');
+    const fechaStr = `${d}/${m}`;
+    return `<div class="flex items-center gap-3 bg-[#1c1c36] rounded-xl px-3 py-2.5 border border-gray-800/40 fade-in group hover:border-gray-700 transition cursor-pointer" onclick="showDayDetail('${s.date}', sessions.filter(x => x.date === '${s.date}'))">
+      <div class="text-center min-w-[2.2rem]">
+        <div class="text-xs font-bold text-gray-300">${fechaStr}</div>
+        <div class="text-[10px] text-gray-500">${diaSem}</div>
+      </div>
+      <span class="type-badge ${tipo.bg} border">${tipo.label}</span>
+      <div class="ml-auto flex items-center gap-3 text-xs text-gray-400">
+        <span class="font-mono font-semibold">${s.volume} min</span>
+        <span class="font-mono text-amber-400/80 font-bold">RPE ${s.intensity}</span>
+        <button onclick="event.stopPropagation(); openEdit('${s.id}')" class="p-1 hover:text-amber-400 transition opacity-0 group-hover:opacity-100">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        </button>
+        <button onclick="event.stopPropagation(); deleteSession('${s.id}')" class="p-1 hover:text-red-400 transition opacity-0 group-hover:opacity-100">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ---------------------------------------------------------------
+// STATS
+// ---------------------------------------------------------------
+function renderStats() {
+  const ms = sessionsForMonth(currentYear, currentMonth);
+  const stats = getStats(ms);
+  document.getElementById('statSessions').textContent = stats.count;
+  document.getElementById('statVolume').textContent = stats.vol + ' min';
+  document.getElementById('statAvgIntensity').textContent = stats.count ? `RPE ${stats.avgInt}` : '—';
+  document.getElementById('statAvgVolume').textContent = stats.count ? `${stats.avgVol} min` : '—';
+}
+
+// ---------------------------------------------------------------
+// SIDE PANEL
+// ---------------------------------------------------------------
+function openPanel(title, bodyHtml) {
+  document.getElementById('panelTitle').textContent = title;
+  document.getElementById('panelBody').innerHTML = bodyHtml;
+  document.getElementById('panelOverlay').classList.remove('hidden');
+  document.getElementById('sidePanel').classList.remove('translate-x-full');
+  document.getElementById('sidePanel').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePanel() {
+  document.getElementById('panelOverlay').classList.add('hidden');
+  document.getElementById('sidePanel').classList.add('translate-x-full');
+  document.getElementById('sidePanel').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ---------------------------------------------------------------
+// DAY DETAIL
+// ---------------------------------------------------------------
+function showDayDetail(dateStr, daySessions) {
+  const fecha = parseDate(dateStr);
+  const diaSem = DAYS[fecha.getDay()];
+  const [y, m, d] = dateStr.split('-');
+  const stats = getStats(daySessions);
+
+  let body = `<div class="mb-4 pb-3 border-b border-gray-800">
+    <div class="text-2xl font-bold text-gray-100">${d} de ${MONTHS[parseInt(m)-1]}</div>
+    <div class="text-sm text-gray-500">${diaSem}</div>
+  </div>
+  <div class="grid grid-cols-3 gap-2 mb-4">
+    <div class="bg-[#1c1c36] rounded-lg p-2 text-center"><div class="text-xs text-gray-500">Sesiones</div><div class="text-lg font-bold text-amber-400">${stats.count}</div></div>
+    <div class="bg-[#1c1c36] rounded-lg p-2 text-center"><div class="text-xs text-gray-500">Volumen</div><div class="text-lg font-bold text-amber-400">${stats.vol} min</div></div>
+    <div class="bg-[#1c1c36] rounded-lg p-2 text-center"><div class="text-xs text-gray-500">RPE medio</div><div class="text-lg font-bold text-amber-400">${stats.avgInt}</div></div>
+  </div>
+  <div class="space-y-2">`;
+
+  daySessions.forEach(s => {
+    const tipo = getTipo(s.tipo);
+    body += `<div class="bg-[#1c1c36] rounded-xl p-3 border border-gray-800/40">
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="type-badge ${tipo.bg} border text-xs">${tipo.label}</span>
+        <div class="flex gap-1.5">
+          <button onclick="closePanel();openEdit('${s.id}')" class="p-1 hover:text-amber-400 transition text-gray-400"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+          <button onclick="deleteSession('${s.id}')" class="p-1 hover:text-red-400 transition text-gray-400"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+        </div>
+      </div>
+      <div class="flex gap-4 text-xs text-gray-400 mb-1.5">
+        <span class="font-mono font-semibold">${s.volume} min</span>
+        <span class="font-mono text-amber-400/80 font-bold">RPE ${s.intensity}/10</span>
+      </div>
+      ${s.notes ? `<div class="text-xs text-gray-400 bg-[#0f0f1a] rounded-lg p-2 mt-1.5 leading-relaxed">${escapeHtml(s.notes)}</div>` : ''}
+    </div>`;
+  });
+
+  body += '</div>';
+  openPanel(`📋 ${d} ${MONTHS[parseInt(m)-1]}`, body);
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ---------------------------------------------------------------
+// FORMULARY
+// ---------------------------------------------------------------
+function openForm(date) {
+  editingId = null;
+  document.getElementById('panelTitle').textContent = '📝 Nueva sesión';
+  document.getElementById('panelBody').innerHTML = renderFormHtml(date || todayStr(), null);
+  openPanel('', '');
+  // Re-set title after render
+  document.getElementById('panelTitle').textContent = '📝 Nueva sesión';
+  setupFormListeners();
+}
+
+function openEdit(id) {
+  const s = sessions.find(x => x.id === id);
+  if (!s) return;
+  editingId = id;
+  document.getElementById('panelTitle').textContent = '✏️ Editar sesión';
+  document.getElementById('panelBody').innerHTML = renderFormHtml(s.date, s);
+  openPanel('', '');
+  document.getElementById('panelTitle').textContent = '✏️ Editar sesión';
+  setupFormListeners();
+}
+
+function renderFormHtml(date, session) {
+  const s = session || {};
+  const tiposOpts = TIPOS.map(t =>
+    `<option value="${t.id}" ${s.tipo === t.id ? 'selected' : ''}>${t.label}</option>`
+  ).join('');
+
+  return `<form id="sessionForm" class="space-y-4">
+    <div>
+      <label class="block text-xs font-medium text-gray-400 mb-1">Fecha</label>
+      <input type="date" name="date" value="${s.date || date}" class="w-full bg-[#0f0f1a] border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-gray-100 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition" required />
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-gray-400 mb-1">Tipo de sesión</label>
+      <select name="tipo" class="w-full bg-[#0f0f1a] border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-gray-100 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition">
+        ${tiposOpts}
+      </select>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-400 mb-1">Volumen (minutos)</label>
+        <input type="number" name="volume" value="${s.volume || ''}" min="1" max="600" placeholder="45" class="w-full bg-[#0f0f1a] border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-gray-100 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition" required />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-400 mb-1">Intensidad (RPE)</label>
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-gray-500">1</span>
+          <input type="range" name="intensity" min="1" max="10" value="${s.intensity || '5'}" class="w-full accent-amber-500 h-1.5" oninput="document.getElementById('rpeVal').textContent=this.value" />
+          <span class="text-xs text-gray-500">10</span>
+        </div>
+        <div class="text-center mt-1">
+          <span id="rpeVal" class="text-lg font-bold font-mono text-amber-400">${s.intensity || '5'}</span>
+          <span class="text-xs text-gray-500">/10</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-gray-400 mb-1">Sensaciones / Notas</label>
+      <textarea name="notes" rows="3" placeholder="Fatiga percibida, dolores, estado de ánimo, observaciones…" class="w-full bg-[#0f0f1a] border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-gray-100 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition resize-none">${escapeHtml(s.notes || '')}</textarea>
+    </div>
+
+    <div class="flex gap-3 pt-2">
+      <button type="submit" class="flex-1 bg-amber-500 hover:bg-amber-600 text-black font-semibold py-2.5 rounded-xl transition text-sm shadow-lg shadow-amber-500/20">
+        ${session ? 'Guardar cambios' : 'Registrar sesión'}
+      </button>
+      <button type="button" onclick="closePanel()" class="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl transition text-sm">Cancelar</button>
+    </div>
+  </form>`;
+}
+
+function setupFormListeners() {
+  const form = document.getElementById('sessionForm');
+  if (!form) return;
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const data = {
+      date: fd.get('date'),
+      tipo: fd.get('tipo'),
+      volume: fd.get('volume'),
+      intensity: fd.get('intensity'),
+      notes: fd.get('notes') || '',
+    };
+
+    if (!data.date || !data.volume) return;
+
+    if (editingId) {
+      const idx = sessions.findIndex(s => s.id === editingId);
+      if (idx !== -1) {
+        sessions[idx] = { ...sessions[idx], ...data, id: editingId };
+      }
+      editingId = null;
+    } else {
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      sessions.push({ ...data, id });
+    }
+
+    saveSessions();
+    closePanel();
+    renderCalendar();
+  });
+}
+
+// ---------------------------------------------------------------
+// DELETE
+// ---------------------------------------------------------------
+function deleteSession(id) {
+  if (!confirm('¿Eliminar esta sesión?')) return;
+  sessions = sessions.filter(s => s.id !== id);
+  saveSessions();
+  renderCalendar();
+  closePanel();
+}
+
+// ---------------------------------------------------------------
+// PDF EXPORT
+// ---------------------------------------------------------------
+function exportPdf() {
+  const ms = sessionsForMonth(currentYear, currentMonth)
+    .sort((a,b) => a.date.localeCompare(b.date));
+  if (ms.length === 0) {
+    alert('No hay sesiones para exportar este mes.');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'mm', 'a4');
+
+  // Colors
+  const amber = '#f59e0b';
+  const darkBg = '#1a1a2e';
+  const darkCard = '#16162a';
+
+  // Background fill
+  doc.setFillColor(15, 15, 26);
+  doc.rect(0, 0, 210, 297, 'F');
+
+  // Title
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.setTextColor(245, 158, 11);
+  doc.text(`Diario de Entrenamiento`, 105, 25, { align: 'center' });
+
+  // Month subtitle
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(14);
+  doc.setTextColor(156, 163, 175);
+  doc.text(`${MONTHS[currentMonth]} ${currentYear}`, 105, 35, { align: 'center' });
+
+  // Stats summary
+  const stats = getStats(ms);
+  doc.setFontSize(9);
+  doc.setTextColor(209, 213, 219);
+
+  const statLines = [
+    [`Sesiones: ${stats.count}`, `Volumen total: ${stats.vol} min`],
+    [`Intensidad media: RPE ${stats.avgInt}`, `Media por sesión: ${stats.avgVol} min`],
+  ];
+  let sy = 44;
+  statLines.forEach(row => {
+    doc.text(row[0], 20, sy);
+    doc.text(row[1], 105, sy, { align: 'center' });
+    doc.text(row[2] || '', 190, sy, { align: 'right' });
+    sy += 5;
+  });
+
+  // Table
+  const headers = [['Fecha', 'Tipo', 'Volumen', 'RPE', 'Notas']];
+  const body = ms.map(s => {
+    const tipo = getTipo(s.tipo);
+    const [y, m, d] = s.date.split('-');
+    return [`${d}/${m}`, tipo.label, `${s.volume} min`, `${s.intensity}/10`, s.notes || '—'];
+  });
+
+  doc.autoTable({
+    head: headers,
+    body: body,
+    startY: 56,
+    theme: 'grid',
+    styles: {
+      font: 'helvetica',
+      fontSize: 8,
+      textColor: [209, 213, 219],
+      fillColor: [22, 22, 42],
+      lineColor: [55, 55, 75],
+      lineWidth: 0.3,
+      cellPadding: { top: 3, right: 3, bottom: 3, left: 3 },
+    },
+    headStyles: {
+      fillColor: [245, 158, 11],
+      textColor: [0, 0, 0],
+      fontStyle: 'bold',
+      fontSize: 8,
+    },
+    alternateRowStyles: {
+      fillColor: [26, 26, 46],
+    },
+    columnStyles: {
+      0: { cellWidth: 18 },
+      1: { cellWidth: 40 },
+      2: { cellWidth: 22, halign: 'center' },
+      3: { cellWidth: 18, halign: 'center' },
+      4: { cellWidth: 'auto' },
+    },
+    margin: { top: 56, right: 14, left: 14 },
+  });
+
+  // Footer
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7);
+    doc.setTextColor(75, 85, 99);
+    doc.text(`Generado el ${new Date().toLocaleDateString('es-ES')} — diario-entrenamiento`, 105, 290, { align: 'center' });
+  }
+
+  const filename = `entrenamiento-${MONTHS[currentMonth].toLowerCase()}-${currentYear}.pdf`;
+  doc.save(filename);
+}
+
+// ---------------------------------------------------------------
+// NAVIGATION
+// ---------------------------------------------------------------
+function prevMonth() {
+  currentMonth--;
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  renderCalendar();
+}
+
+function nextMonth() {
+  currentMonth++;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  renderCalendar();
+}
+
+// ---------------------------------------------------------------
+// INIT
+// ---------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+  loadSessions();
+
+  document.getElementById('prevMonth').addEventListener('click', prevMonth);
+  document.getElementById('nextMonth').addEventListener('click', nextMonth);
+  document.getElementById('btnNewSession').addEventListener('click', () => openForm(todayStr()));
+  document.getElementById('btnExportPdf').addEventListener('click', exportPdf);
+
+  renderLegend();
+  renderCalendar();
+});
+</script>
+
+</body>
+</html>
