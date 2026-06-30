@@ -418,13 +418,18 @@ function escapeHtml(str) {
 // ---------------------------------------------------------------
 // FORMULARY
 // ---------------------------------------------------------------
+function openPanelDirect() {
+  document.getElementById('panelOverlay').classList.remove('hidden');
+  document.getElementById('sidePanel').classList.remove('translate-x-full');
+  document.getElementById('sidePanel').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
 function openForm(date) {
   editingId = null;
   document.getElementById('panelTitle').textContent = '📝 Nueva sesión';
   document.getElementById('panelBody').innerHTML = renderFormHtml(date || todayStr(), null);
-  openPanel('', '');
-  // Re-set title after render
-  document.getElementById('panelTitle').textContent = '📝 Nueva sesión';
+  openPanelDirect();
   setupFormListeners();
 }
 
@@ -434,8 +439,7 @@ function openEdit(id) {
   editingId = id;
   document.getElementById('panelTitle').textContent = '✏️ Editar sesión';
   document.getElementById('panelBody').innerHTML = renderFormHtml(s.date, s);
-  openPanel('', '');
-  document.getElementById('panelTitle').textContent = '✏️ Editar sesión';
+  openPanelDirect();
   setupFormListeners();
 }
 
