@@ -49,21 +49,51 @@
     .pain-dot{transition:all .2s;cursor:pointer}.pain-dot:hover{transform:scale(1.3)}
     @media print{body{background:#fff!important}.no-print{display:none!important}.ios-card{box-shadow:none!important;border:1px solid #ddd!important;break-inside:avoid}}
     @media(max-width:640px){
+      /* Universal touch target: 44px minimum for all interactive */
+      button,a,.clickable,[onclick],.cal-cell,.avatar-btn{cursor:pointer}
+      button:not(.no-touch):not(.ios-slider),.btn-s,.btn-p,.avatar-btn,#prevMonth,#nextMonth,
+      #navDiary,#navMeas,#navDash,#btnWellness,#btnMeso,#btnLoadTmpl,#btnSaveTmpl,
+      #confirmCancel,#confirmDelete,#btnNewMeasurement,#createProfileBtn,
+      .tag-chip,#filterChips button{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+      #prevMonth,#nextMonth{min-width:44px}
+      #navDiary,#navMeas,#navDash{padding:10px 14px;font-size:.875rem}
+      .avatar-btn{width:38px;height:38px;font-size:1.1rem}
+      #profileSelector button:last-child{min-width:36px;min-height:36px;padding:0 8px}
+      /* Edit/delete icons in session list - expand invisible tap area */
+      #sessionList button{padding:10px!important;min-width:44px;min-height:44px;margin:-6px}
+      #sessionList button svg{width:16px;height:16px}
+      /* Exercise row buttons */
+      .exercise-row button{min-width:36px;min-height:36px;padding:8px!important}
+      .exercise-row input{padding:10px 10px!important;font-size:.875rem!important}
+      .exercise-row .flex-1{min-width:80px}
+      /* Wellness sliders */
+      .ios-slider{height:6px}
+      .ios-slider::-webkit-slider-thumb{width:30px;height:30px}
+      /* ACWR ratio tap area */
+      #acwrBox{padding:8px 16px}
+      /* ACSWR section values */
+      .text-center>[class*="text-"]{margin:0}
+      /* Modal buttons */
+      #confirmCancel,#confirmDelete{min-width:100px}
+      /* Dashboard goal click */
+      #dashGoalValue{min-height:44px;display:inline-flex;align-items:center}
+      /* Nav bar - ensure full tap height */
+      .nav-blur .flex.items-center{min-height:44px}
+      /* Calendar cells */
       .cal-cell{min-height:48px}.cal-cell.has-session::after{width:14px;height:3px}
+      /* Cards */
       .ios-card,.ios-card-s{border-radius:16px}
+      /* Inputs */
       .ios-input{padding:14px 14px;font-size:.9375rem}
-      .btn-p,.btn-s{padding:12px 16px;min-height:44px;font-size:.875rem}
-      .btn-s{padding:10px 14px}
+      /* Panel sheet */
       #sidePanel{border-radius:20px 20px 0 0!important;width:100%!important;max-height:85vh;top:auto;bottom:0;z-index:60}
       .slide-panel{transform:translateY(100%)!important}
       .slide-panel.open{transform:translateY(0)!important}
       .pain-dot{r:5px!important}
-      #profileSelector{gap:0;flex-wrap:wrap;justify-content:flex-end}
-      .avatar-btn{width:30px;height:30px;font-size:.9rem}
+      #profileSelector{gap:2px;flex-wrap:wrap;justify-content:flex-end}
       .nav-blur .flex.items-center.gap-2{gap:4px}
-      #filterChips button{font-size:11px!important;padding:5px 10px!important}
-      #filterChips{gap:4px}
-      .ios-slider::-webkit-slider-thumb{width:28px;height:28px}
+      #filterChips button{font-size:12px!important;padding:8px 14px!important}
+      #filterChips{gap:6px}
       #comparisonBox .grid-cols-2{grid-template-columns:1fr}
       #dashTypeBreakdown .text-xs{font-size:11px!important}
       #monthTitle{font-size:1rem}
@@ -71,6 +101,16 @@
       #statSessions,#statVolume,#statSrpe,#statStreak{font-size:1.125rem}
       #dashGoalValue,#dashRestDays,#dashTotalVolume,#dashWeeklySessions{font-size:1.125rem}
       #wellnessOverlay .ios-card-s,#measOverlay .ios-card-s,#mesoOverlay .ios-card-s,#confirmOverlay .ios-card-s{margin:0 8px;max-height:90vh;overflow-y:auto}
+      /* Header buttons: ensure full touch size */
+      #btnNewSession{padding:12px 16px!important;font-size:.875rem!important}
+      #btnNewSession svg{width:18px;height:18px}
+      #btnPrint{padding:12px 14px!important;min-width:44px}
+      #btnPrint svg{width:18px;height:18px}
+      #btnExportCsv,#btnExportPdf,#btnExportAllPdf{padding:10px 14px!important;font-size:.8125rem!important}
+      /* Templates */
+      #tmplSelect{min-height:44px;padding:8px 24px 8px 12px!important;font-size:.8125rem!important}
+      .btn-p,.btn-s{padding:12px 16px;min-height:44px;font-size:.875rem}
+      .btn-s{padding:10px 14px}
     }
     @media(min-width:641px)and(max-width:1024px){
       .cal-cell{min-height:52px}
