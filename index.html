@@ -5,58 +5,88 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Diario de Entrenamiento</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"SF Pro Display"', '"Helvetica Neue"', 'Arial', 'sans-serif'] },
+          colors: {
+            ios: { bg: '#f2f2f7', card: '#ffffff', sep: '#e5e5ea', label: '#1c1c1e', slabel: '#3a3a3c', tlabel: '#8e8e93', qlabel: '#aeaeb2' },
+            sport: { 400: '#ff6b35', 500: '#ff5a1f', 600: '#e04e1a' }
+          }
+        }
+      }
+    }
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
-    * { font-family: 'Inter', system-ui, sans-serif; }
+    * { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
     html { scroll-behavior: smooth; }
     ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #0a0a1a; }
-    ::-webkit-scrollbar-thumb { background: #f59e0b44; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #f59e0b88; }
-    ::selection { background: rgba(245,158,11,0.3); color: #fbbf24; }
+    ::-webkit-scrollbar-track { background: #f2f2f7; }
+    ::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 4px; }
+    ::selection { background: rgba(255,107,53,0.2); color: #1c1c1e; }
 
-    body { background: linear-gradient(135deg, #080818 0%, #0d0d20 50%, #0a0a1a 100%); min-height: 100vh; }
+    body { background: #f2f2f7; min-height: 100vh; color: #1c1c1e; }
 
-    .glass { background: rgba(22,22,42,0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(75,75,100,0.15); }
-    .glass-strong { background: rgba(22,22,42,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(75,75,100,0.2); }
-    .glass-glow { box-shadow: 0 0 0 1px rgba(245,158,11,0.06), 0 8px 32px rgba(0,0,0,0.4); }
+    .ios-card { background: #ffffff; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03); border: 1px solid #e5e5ea; }
+    .ios-card-strong { background: #ffffff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04); border: 1px solid #e5e5ea; }
+    .ios-inset { background: #f2f2f7; border-radius: 10px; }
 
-    .cal-cell { transition: all 0.15s; cursor: pointer; min-height: 60px; position: relative; }
-    .cal-cell:hover { background: rgba(245,158,11,0.06); }
-    .cal-cell.has-session::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 18px; height: 3px; border-radius: 2px; }
-    .cal-cell.today { background: rgba(245,158,11,0.08); box-shadow: inset 0 0 0 1px rgba(245,158,11,0.15); }
-    .cal-cell.selected { background: rgba(245,158,11,0.12); }
+    .cal-cell { transition: all 0.15s; cursor: pointer; min-height: 60px; position: relative; border-radius: 8px; }
+    .cal-cell:hover { background: #f2f2f7; }
+    .cal-cell.has-session::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 18px; height: 3px; border-radius: 2px; }
+    .cal-cell.today { background: rgba(255,107,53,0.08); box-shadow: inset 0 0 0 1.5px rgba(255,107,53,0.2); }
+    .cal-cell.today .day-num { color: #ff5a1f; }
 
     .slide-panel { transition: transform 0.35s cubic-bezier(0.22,1,0.36,1); }
     .slide-panel.open { transform: translateX(0); }
 
     .fade-in { animation: fadeSlideIn 0.25s ease both; }
     @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
     .scale-in { animation: scaleIn 0.2s ease both; }
     @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
     .tag-chip { transition: all 0.15s; cursor: pointer; }
-    .tag-chip:hover { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3); }
-    .tag-chip.active { background: rgba(245,158,11,0.2); border-color: rgba(245,158,11,0.4); color: #f59e0b; }
+    .tag-chip:hover { background: rgba(255,107,53,0.08); border-color: rgba(255,107,53,0.25); }
+    .tag-chip.active { background: rgba(255,107,53,0.12); border-color: rgba(255,107,53,0.35); color: #ff5a1f; }
 
     .acwr-gauge { transition: stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1); }
-    .type-badge { font-size: 0.63rem; padding: 1px 6px; border-radius: 999px; white-space: nowrap; font-weight: 500; letter-spacing: 0.01em; }
+    .type-badge { font-size: 0.63rem; padding: 2px 8px; border-radius: 999px; white-space: nowrap; font-weight: 500; letter-spacing: 0.01em; }
 
     .stat-card { transition: all 0.2s; }
-    .stat-card:hover { transform: translateY(-1px); border-color: rgba(245,158,11,0.15); }
+    .stat-card:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
 
     .exercise-row { animation: fadeSlideIn 0.2s ease both; }
 
-    .nav-tab { transition: all 0.2s; cursor: pointer; position: relative; }
-    .nav-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: #f59e0b; border-radius: 1px; }
+    .nav-tab { transition: all 0.2s; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; }
+    .nav-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 8px; right: 8px; height: 2.5px; background: #ff5a1f; border-radius: 2px; }
 
-    input, select, textarea { transition: all 0.2s; }
-    input:focus, select:focus, textarea:focus { border-color: rgba(245,158,11,0.4); box-shadow: 0 0 0 3px rgba(245,158,11,0.08); }
+    input, select, textarea { transition: all 0.2s; -webkit-appearance: none; }
+    input:focus, select:focus, textarea:focus { outline: none; }
+
+    .ios-input { background: #f2f2f7; border: 1px solid #e5e5ea; border-radius: 10px; padding: 10px 14px; font-size: 0.875rem; color: #1c1c1e; }
+    .ios-input:focus { border-color: #ff5a1f; box-shadow: 0 0 0 3px rgba(255,107,53,0.12); }
+    .ios-input::placeholder { color: #aeaeb2; }
+
+    .ios-slider { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px; background: #e5e5ea; outline: none; }
+    .ios-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%; background: white; border: 1px solid #e5e5ea; box-shadow: 0 2px 6px rgba(0,0,0,0.1); cursor: pointer; }
+    .ios-slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: white; border: 1px solid #e5e5ea; box-shadow: 0 2px 6px rgba(0,0,0,0.1); cursor: pointer; }
+
+    .ios-select { background: #f2f2f7 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center; background-size: 12px; }
+
+    .btn-ios-primary { background: #ff5a1f; color: white; font-weight: 600; border-radius: 12px; padding: 10px 20px; font-size: 0.8125rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(255,107,53,0.25); }
+    .btn-ios-primary:hover { background: #e04e1a; box-shadow: 0 4px 16px rgba(255,107,53,0.3); }
+    .btn-ios-primary:active { transform: scale(0.97); }
+
+    .btn-ios-secondary { background: rgba(0,0,0,0.04); color: #3a3a3c; font-weight: 500; border-radius: 10px; padding: 8px 14px; font-size: 0.8125rem; transition: all 0.2s; border: 1px solid #e5e5ea; }
+    .btn-ios-secondary:hover { background: rgba(0,0,0,0.07); }
+    .btn-ios-secondary:active { transform: scale(0.97); }
+
+    .nav-blur { background: rgba(255,255,255,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,0,0,0.08); }
 
     @media (max-width: 640px) {
       .cal-cell { min-height: 44px; font-size: 0.78rem; }
@@ -64,109 +94,109 @@
     }
   </style>
 </head>
-<body class="text-gray-100 antialiased">
+<body>
 
-<nav id="mainNav" class="sticky top-0 z-30 glass border-b border-gray-800/40">
-  <div class="max-w-4xl mx-auto px-3 sm:px-6 flex items-center justify-between h-12">
+<nav id="mainNav" class="sticky top-0 z-30 nav-blur">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 flex items-center justify-between h-11">
     <div class="flex items-center gap-2">
-      <span class="text-lg font-extrabold tracking-tight">
-        <span class="text-amber-400">⛰️</span>
-        <span class="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">Diario</span>
-        <span class="text-gray-300">Entrenamiento</span>
+      <span class="text-base font-bold tracking-tight text-[#1c1c1e]">
+        <span>⛰️</span>
+        <span style="background:linear-gradient(135deg,#ff5a1f,#ff9500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Diario</span>
+        <span style="color:#3a3a3c">Entrenamiento</span>
       </span>
     </div>
-    <div class="flex items-center gap-1.5">
-      <button id="navTabDiary" class="nav-tab active text-xs font-medium text-amber-400 px-2.5 py-1.5">Diario</button>
-      <button id="navTabMeasurements" class="nav-tab text-xs font-medium text-gray-400 hover:text-gray-200 px-2.5 py-1.5">Mediciones</button>
-      <button id="navTabDashboard" class="nav-tab text-xs font-medium text-gray-400 hover:text-gray-200 px-2.5 py-1.5">Dashboard</button>
+    <div class="flex items-center gap-1">
+      <button id="navTabDiary" class="nav-tab active text-[0.75rem] font-semibold text-[#ff5a1f] px-3 py-1.5">Diario</button>
+      <button id="navTabMeasurements" class="nav-tab text-[0.75rem] font-medium text-[#8e8e93] hover:text-[#3a3a3c] px-3 py-1.5">Mediciones</button>
+      <button id="navTabDashboard" class="nav-tab text-[0.75rem] font-medium text-[#8e8e93] hover:text-[#3a3a3c] px-3 py-1.5">Dashboard</button>
     </div>
   </div>
 </nav>
 
-<div id="app" class="max-w-4xl mx-auto px-3 sm:px-6 py-4">
+<div id="app" class="max-w-4xl mx-auto px-4 sm:px-6 py-4">
 
-  <!-- SECTION: DIARY (visible by default) -->
+  <!-- DIARY -->
   <div id="diarySection">
     <header class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-3">
-        <button id="btnNewSession" class="text-xs bg-amber-500 hover:bg-amber-400 text-black font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30">
+      <div class="flex items-center gap-2">
+        <button id="btnNewSession" class="btn-ios-primary flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
           <span class="hidden sm:inline">Nueva sesión</span>
         </button>
-        <button id="btnExportCsv" class="text-xs bg-gray-800/80 hover:bg-gray-700/80 text-gray-300 border border-gray-700/50 px-2.5 py-2 rounded-xl transition flex items-center gap-1.5">
+        <button id="btnExportCsv" class="btn-ios-secondary flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span class="hidden sm:inline">CSV</span>
         </button>
       </div>
       <div class="flex gap-1.5">
-        <button id="btnExportPdf" class="text-xs bg-gray-800/80 hover:bg-gray-700/80 text-gray-300 border border-gray-700/50 px-2.5 py-2 rounded-xl transition flex items-center gap-1.5">
+        <button id="btnExportPdf" class="btn-ios-secondary flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
           <span class="hidden sm:inline">PDF mes</span>
         </button>
-        <button id="btnExportAllPdf" class="text-xs bg-gray-800/80 hover:bg-gray-700/80 text-gray-300 border border-gray-700/50 px-2.5 py-2 rounded-xl transition flex items-center gap-1.5">
+        <button id="btnExportAllPdf" class="btn-ios-secondary flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
           <span class="hidden sm:inline">PDF todo</span>
         </button>
       </div>
     </header>
 
-    <!-- ACWR GAUGE -->
-    <section id="acwrSection" class="glass rounded-2xl p-3 sm:p-4 mb-4 hidden">
+    <!-- ACWR -->
+    <section id="acwrSection" class="ios-card p-4 mb-4 hidden">
       <div class="flex items-center justify-between flex-wrap gap-3">
         <div class="flex items-center gap-3">
-          <svg class="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <svg class="w-5 h-5 text-[#ff5a1f] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           <div>
-            <div class="text-xs font-semibold text-gray-300">Carga aguda : crónica</div>
-            <div class="text-[10px] text-gray-500">ACWR — prevención de lesiones</div>
+            <div class="text-xs font-semibold text-[#1c1c1e]">Carga aguda : crónica</div>
+            <div class="text-[10px] text-[#8e8e93]">ACWR — prevención de lesiones</div>
           </div>
         </div>
         <div class="flex items-center gap-4">
-          <div class="text-center"><div class="text-[10px] text-gray-500">Aguda (7d)</div><div id="acwrAcute" class="text-sm font-bold font-mono text-gray-200">0</div></div>
-          <div class="text-center"><div class="text-[10px] text-gray-500">Crónica (28d)</div><div id="acwrChronic" class="text-sm font-bold font-mono text-gray-200">0</div></div>
-          <div class="text-center px-3 py-1.5 rounded-xl" id="acwrBox">
-            <div class="text-[10px] text-gray-500">Ratio</div>
+          <div class="text-center"><div class="text-[10px] text-[#8e8e93]">Aguda (7d)</div><div id="acwrAcute" class="text-sm font-bold font-mono text-[#1c1c1e]">0</div></div>
+          <div class="text-center"><div class="text-[10px] text-[#8e8e93]">Crónica (28d)</div><div id="acwrChronic" class="text-sm font-bold font-mono text-[#1c1c1e]">0</div></div>
+          <div class="text-center px-3 py-1.5 rounded-xl ios-inset" id="acwrBox">
+            <div class="text-[10px] text-[#8e8e93]">Ratio</div>
             <div id="acwrRatio" class="text-lg font-extrabold font-mono">—</div>
           </div>
         </div>
       </div>
-      <div class="mt-2 h-1.5 bg-gray-800/60 rounded-full overflow-hidden">
-        <div id="acwrBar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444)"></div>
+      <div class="mt-2 h-1.5 bg-[#e5e5ea] rounded-full overflow-hidden">
+        <div id="acwrBar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:linear-gradient(90deg,#34c759,#ff9500,#ff3b30)"></div>
       </div>
-      <div class="flex justify-between text-[9px] text-gray-600 mt-0.5 px-0.5">
+      <div class="flex justify-between text-[9px] text-[#aeaeb2] mt-0.5 px-0.5">
         <span>0.8 seguro</span><span>1.0 óptimo</span><span>1.3 riesgo</span><span>1.5+ peligro</span>
       </div>
     </section>
 
     <!-- CALENDAR -->
-    <section class="glass rounded-2xl p-3 sm:p-4 mb-4">
+    <section class="ios-card p-3 sm:p-4 mb-4">
       <div class="flex items-center justify-between mb-3">
-        <button id="prevMonth" class="p-1.5 hover:bg-gray-800/60 rounded-lg transition text-gray-400 hover:text-amber-400">
+        <button id="prevMonth" class="p-1.5 hover:bg-[#f2f2f7] rounded-lg transition text-[#8e8e93] hover:text-[#ff5a1f]">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
-        <h2 id="monthTitle" class="text-base sm:text-lg font-bold text-gray-100"></h2>
-        <button id="nextMonth" class="p-1.5 hover:bg-gray-800/60 rounded-lg transition text-gray-400 hover:text-amber-400">
+        <h2 id="monthTitle" class="text-base sm:text-lg font-bold text-[#1c1c1e] tracking-tight"></h2>
+        <button id="nextMonth" class="p-1.5 hover:bg-[#f2f2f7] rounded-lg transition text-[#8e8e93] hover:text-[#ff5a1f]">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </button>
       </div>
-      <div class="grid grid-cols-7 mb-1 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+      <div class="grid grid-cols-7 mb-1 text-center text-[10px] font-semibold text-[#8e8e93] uppercase tracking-widest">
         <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
       </div>
-      <div id="calendarGrid" class="grid grid-cols-7 gap-px bg-gray-800/20 rounded-xl overflow-hidden"></div>
-      <div id="legendRow" class="flex flex-wrap gap-1.5 mt-2.5 text-[9px] text-gray-500"></div>
+      <div id="calendarGrid" class="grid grid-cols-7 gap-0.5"></div>
+      <div id="legendRow" class="flex flex-wrap gap-1.5 mt-2.5 text-[9px] text-[#8e8e93]"></div>
     </section>
 
-    <!-- CHARTS ROW: evolution + weekly -->
+    <!-- CHARTS -->
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
-      <section id="chartEvolutionSection" class="glass rounded-2xl p-3 sm:p-4 hidden">
-        <h3 class="text-xs font-semibold text-gray-300 mb-2 flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      <section id="chartEvolutionSection" class="ios-card p-3 sm:p-4 hidden">
+        <h3 class="text-xs font-semibold text-[#3a3a3c] mb-2 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-[#ff5a1f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           Evolución diaria
         </h3>
         <div class="relative"><canvas id="evolutionChart"></canvas></div>
       </section>
-      <section id="chartWeeklySection" class="glass rounded-2xl p-3 sm:p-4 hidden">
-        <h3 class="text-xs font-semibold text-gray-300 mb-2 flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      <section id="chartWeeklySection" class="ios-card p-3 sm:p-4 hidden">
+        <h3 class="text-xs font-semibold text-[#3a3a3c] mb-2 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-[#34c759]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           Volumen semanal
         </h3>
         <div class="relative"><canvas id="weeklyChart"></canvas></div>
@@ -174,139 +204,135 @@
     </div>
 
     <!-- SEARCH + FILTER + COMPARISON -->
-    <section class="glass rounded-2xl p-3 sm:p-4 mb-4">
+    <section class="ios-card p-4 mb-4">
       <div class="flex flex-wrap items-center gap-2 mb-3">
         <div class="relative flex-1 min-w-[140px]">
-          <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input id="searchNotes" type="text" placeholder="Buscar en notas…" class="w-full bg-[#0a0a1a]/80 border border-gray-700/50 rounded-xl pl-8 pr-3 py-2 text-xs text-gray-200 placeholder:text-gray-600 focus:outline-none" />
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#aeaeb2]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input id="searchNotes" type="text" placeholder="Buscar en notas…" class="ios-input w-full pl-9" />
         </div>
         <div id="filterChips" class="flex flex-wrap gap-1"></div>
         <div class="flex items-center gap-1.5 ml-auto">
-          <span class="text-[10px] text-gray-500">vs</span>
-          <select id="compareMonth" class="bg-[#0a0a1a]/80 border border-gray-700/50 rounded-lg px-2 py-1.5 text-xs text-gray-300 focus:outline-none">
+          <span class="text-[10px] text-[#8e8e93]">vs</span>
+          <select id="compareMonth" class="ios-input ios-select py-1.5 pr-7 text-xs">
             <option value="">—</option>
           </select>
         </div>
       </div>
-
-      <!-- COMPARISON TABLE -->
       <div id="comparisonBox" class="hidden mb-3">
         <div class="grid grid-cols-2 gap-2 text-xs">
-          <div class="bg-[#0a0a1a]/50 rounded-xl p-2.5">
-            <div class="text-gray-500 mb-1 font-medium" id="compCurrentLabel">Este mes</div>
-            <div id="compCurrentContent"></div>
+          <div class="ios-inset p-2.5 rounded-xl">
+            <div class="text-[#8e8e93] mb-1 font-medium" id="compCurrentLabel">Este mes</div>
+            <div id="compCurrentContent" class="text-[#1c1c1e] font-mono leading-relaxed"></div>
           </div>
-          <div class="bg-[#0a0a1a]/50 rounded-xl p-2.5">
-            <div class="text-gray-500 mb-1 font-medium" id="compOtherLabel">Otro mes</div>
-            <div id="compOtherContent"></div>
+          <div class="ios-inset p-2.5 rounded-xl">
+            <div class="text-[#8e8e93] mb-1 font-medium" id="compOtherLabel">Otro mes</div>
+            <div id="compOtherContent" class="text-[#1c1c1e] font-mono leading-relaxed"></div>
           </div>
         </div>
       </div>
-
-      <h3 class="text-xs font-semibold text-gray-300 flex items-center gap-1.5 mb-2">
-        <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      <h3 class="text-xs font-semibold text-[#3a3a3c] flex items-center gap-1.5 mb-2">
+        <svg class="w-3.5 h-3.5 text-[#ff5a1f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
         Sesiones
       </h3>
       <div id="sessionList" class="space-y-1"></div>
-      <div id="emptyMonth" class="hidden text-center py-6 text-gray-600 text-xs">
-        <svg class="w-8 h-8 mx-auto mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      <div id="emptyMonth" class="hidden text-center py-6 text-[#aeaeb2] text-xs">
+        <svg class="w-8 h-8 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         No hay sesiones registradas este mes
       </div>
     </section>
 
-    <!-- STATS ROW -->
+    <!-- STATS -->
     <section class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
-      <div class="stat-card glass rounded-xl p-2.5 text-center">
-        <div class="text-[9px] text-gray-500 uppercase tracking-wider mb-0.5">Sesiones</div>
-        <div id="statSessions" class="text-lg font-bold text-amber-400 font-mono">0</div>
+      <div class="stat-card ios-card p-2.5 text-center">
+        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-0.5 font-semibold">Sesiones</div>
+        <div id="statSessions" class="text-lg font-bold font-mono text-[#ff5a1f]">0</div>
       </div>
-      <div class="stat-card glass rounded-xl p-2.5 text-center">
-        <div class="text-[9px] text-gray-500 uppercase tracking-wider mb-0.5">Volumen total</div>
-        <div id="statVolume" class="text-lg font-bold text-amber-400 font-mono">0 min</div>
+      <div class="stat-card ios-card p-2.5 text-center">
+        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-0.5 font-semibold">Volumen total</div>
+        <div id="statVolume" class="text-lg font-bold font-mono text-[#ff5a1f]">0 min</div>
       </div>
-      <div class="stat-card glass rounded-xl p-2.5 text-center">
-        <div class="text-[9px] text-gray-500 uppercase tracking-wider mb-0.5">sRPE total</div>
-        <div id="statSrpe" class="text-lg font-bold text-amber-400 font-mono">0</div>
+      <div class="stat-card ios-card p-2.5 text-center">
+        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-0.5 font-semibold">sRPE total</div>
+        <div id="statSrpe" class="text-lg font-bold font-mono text-[#ff5a1f]">0</div>
       </div>
-      <div class="stat-card glass rounded-xl p-2.5 text-center">
-        <div class="text-[9px] text-gray-500 uppercase tracking-wider mb-0.5">Racha</div>
-        <div id="statStreak" class="text-lg font-bold font-mono text-amber-400">—</div>
+      <div class="stat-card ios-card p-2.5 text-center">
+        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-0.5 font-semibold">Racha</div>
+        <div id="statStreak" class="text-lg font-bold font-mono text-[#ff5a1f]">—</div>
       </div>
     </section>
   </div>
 
-  <!-- SECTION: MEASUREMENTS (hidden by default) -->
+  <!-- MEASUREMENTS -->
   <div id="measurementsSection" class="hidden">
     <header class="flex items-center justify-between mb-4">
-      <h2 class="text-base font-bold text-gray-100 flex items-center gap-2">
-        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+      <h2 class="text-base font-bold text-[#1c1c1e] flex items-center gap-2">
+        <svg class="w-4 h-4 text-[#ff5a1f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
         Mediciones corporales
       </h2>
-      <button id="btnNewMeasurement" class="text-xs bg-amber-500 hover:bg-amber-400 text-black font-bold px-3 py-1.5 rounded-xl transition shadow-lg shadow-amber-500/20">➕ Añadir</button>
+      <button id="btnNewMeasurement" class="btn-ios-primary text-sm px-3 py-1.5">➕ Añadir</button>
     </header>
-    <section class="glass rounded-2xl p-3 sm:p-4 mb-4">
+    <section class="ios-card p-4 mb-4">
       <div class="relative"><canvas id="measurementsChart"></canvas></div>
     </section>
-    <section class="glass rounded-2xl p-3 sm:p-4">
+    <section class="ios-card p-4">
       <div id="measurementsList" class="space-y-1"></div>
-      <div id="emptyMeasurements" class="text-center py-6 text-gray-600 text-xs">
-        <svg class="w-8 h-8 mx-auto mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+      <div id="emptyMeasurements" class="text-center py-6 text-[#aeaeb2] text-xs">
+        <svg class="w-8 h-8 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
         Aún no hay mediciones registradas
       </div>
     </section>
   </div>
 
-  <!-- SECTION: DASHBOARD (hidden by default) -->
+  <!-- DASHBOARD -->
   <div id="dashboardSection" class="hidden">
-    <h2 class="text-base font-bold text-gray-100 mb-4 flex items-center gap-2">
-      <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+    <h2 class="text-base font-bold text-[#1c1c1e] mb-4 flex items-center gap-2">
+      <svg class="w-4 h-4 text-[#ff5a1f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
       Resumen rápido
     </h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-      <div class="glass rounded-xl p-3">
-        <div class="text-[9px] text-gray-500 uppercase tracking-wider mb-1">Esta semana</div>
-        <div id="dashWeeklySessions" class="text-lg font-bold text-amber-400 font-mono">0</div>
-        <div id="dashWeeklyVolume" class="text-[11px] text-gray-400 font-mono">0 min</div>
+      <div class="ios-card p-3">
+        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-1 font-semibold">Esta semana</div>
+        <div id="dashWeeklySessions" class="text-lg font-bold font-mono text-[#ff5a1f]">0</div>
+        <div id="dashWeeklyVolume" class="text-[11px] text-[#3a3a3c] font-mono">0 min</div>
       </div>
-      <div class="glass rounded-xl p-3">
-        <div class="text-[9px] text-gray-500 uppercase tracking-wider mb-1">Objetivo semanal</div>
+      <div class="ios-card p-3">
+        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-1 font-semibold">Objetivo semanal</div>
         <div class="flex items-end gap-2">
-          <div id="dashGoalValue" class="text-lg font-bold text-amber-400 font-mono">—</div>
-          <div id="dashGoalPercent" class="text-[11px] text-gray-500 mb-0.5">0%</div>
+          <div id="dashGoalValue" class="text-lg font-bold font-mono text-[#ff5a1f]">—</div>
+          <div id="dashGoalPercent" class="text-[11px] text-[#8e8e93] mb-0.5">0%</div>
         </div>
-        <div class="mt-1.5 h-1.5 bg-gray-800/60 rounded-full overflow-hidden">
-          <div id="dashGoalBar" class="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all" style="width:0%"></div>
+        <div class="mt-1.5 h-1.5 bg-[#f2f2f7] rounded-full overflow-hidden">
+          <div id="dashGoalBar" class="h-full rounded-full" style="width:0%;background:linear-gradient(90deg,#ff9500,#ff5a1f)"></div>
         </div>
       </div>
-      <div class="glass rounded-xl p-3">
-        <div class="text-[9px] text-gray-500 uppercase tracking-wider mb-1">Último descanso</div>
-        <div id="dashRestDays" class="text-lg font-bold text-amber-400 font-mono">—</div>
-        <div id="dashRestLabel" class="text-[11px] text-gray-500">hace — días</div>
+      <div class="ios-card p-3">
+        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-1 font-semibold">Último descanso</div>
+        <div id="dashRestDays" class="text-lg font-bold font-mono text-[#ff5a1f]">—</div>
+        <div id="dashRestLabel" class="text-[11px] text-[#3a3a3c]">hace — días</div>
       </div>
-      <div class="glass rounded-xl p-3">
-        <div class="text-[9px] text-gray-500 uppercase tracking-wider mb-1">Volumen total</div>
-        <div id="dashTotalVolume" class="text-lg font-bold text-amber-400 font-mono">0 min</div>
-        <div id="dashTotalSessions" class="text-[11px] text-gray-400 font-mono">0 sesiones</div>
+      <div class="ios-card p-3">
+        <div class="text-[9px] text-[#8e8e93] uppercase tracking-wider mb-1 font-semibold">Volumen total</div>
+        <div id="dashTotalVolume" class="text-lg font-bold font-mono text-[#ff5a1f]">0 min</div>
+        <div id="dashTotalSessions" class="text-[11px] text-[#3a3a3c] font-mono">0 sesiones</div>
       </div>
     </div>
-    <section class="glass rounded-2xl p-3 sm:p-4">
-      <h3 class="text-xs font-semibold text-gray-300 mb-2 flex items-center gap-1.5">
-        <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    <section class="ios-card p-4">
+      <h3 class="text-xs font-semibold text-[#3a3a3c] mb-2 flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-[#ff5a1f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         Desglose por tipo
       </h3>
       <div id="dashTypeBreakdown" class="space-y-1.5"></div>
     </section>
   </div>
-
 </div>
 
-<!-- ===== SIDE PANEL ===== -->
-<div id="panelOverlay" class="fixed inset-0 bg-black/70 z-40 hidden transition-opacity" onclick="closePanel()"></div>
-<div id="sidePanel" class="slide-panel fixed top-0 right-0 h-full w-full sm:w-[440px] glass-strong z-50 overflow-y-auto transform translate-x-full shadow-2xl">
+<!-- SIDE PANEL -->
+<div id="panelOverlay" class="fixed inset-0 bg-black/30 z-40 hidden transition-opacity" onclick="closePanel()"></div>
+<div id="sidePanel" class="slide-panel fixed top-0 right-0 h-full w-full sm:w-[440px] bg-white z-50 overflow-y-auto transform translate-x-full shadow-xl" style="border-left:1px solid #e5e5ea">
   <div class="p-4 sm:p-5">
     <div class="flex items-center justify-between mb-4">
-      <h3 id="panelTitle" class="text-sm font-bold text-gray-100"></h3>
-      <button onclick="closePanel()" class="p-1.5 hover:bg-gray-800/80 rounded-lg text-gray-400 hover:text-amber-400 transition">
+      <h3 id="panelTitle" class="text-sm font-bold text-[#1c1c1e]"></h3>
+      <button onclick="closePanel()" class="p-1.5 hover:bg-[#f2f2f7] rounded-lg text-[#8e8e93] hover:text-[#1c1c1e] transition">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
@@ -314,37 +340,37 @@
   </div>
 </div>
 
-<!-- ===== CONFIRMATION MODAL ===== -->
-<div id="confirmOverlay" class="fixed inset-0 bg-black/70 z-50 hidden transition-opacity flex items-center justify-center p-4">
-  <div class="glass-strong rounded-2xl max-w-sm w-full p-5 shadow-2xl scale-in">
+<!-- CONFIRM MODAL -->
+<div id="confirmOverlay" class="fixed inset-0 bg-black/40 z-50 hidden transition-opacity flex items-center justify-center p-4">
+  <div class="ios-card-strong rounded-2xl max-w-sm w-full p-6 shadow-2xl scale-in">
     <div class="flex items-center gap-3 mb-3">
-      <div class="w-9 h-9 rounded-full bg-red-500/15 flex items-center justify-center flex-shrink-0">
-        <svg class="w-4.5 h-4.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+      <div class="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+        <svg class="w-4.5 h-4.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
       </div>
-      <div><h4 class="text-sm font-bold text-gray-100">Eliminar sesión</h4><p class="text-xs text-gray-400">Esta acción no se puede deshacer.</p></div>
+      <div><h4 class="text-sm font-bold text-[#1c1c1e]">Eliminar sesión</h4><p class="text-xs text-[#8e8e93]">Esta acción no se puede deshacer.</p></div>
     </div>
     <div class="flex gap-2 justify-end mt-4">
-      <button id="confirmCancel" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl text-xs font-medium transition">Cancelar</button>
-      <button id="confirmDelete" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-medium transition flex items-center gap-1.5">🗑️ Eliminar</button>
+      <button id="confirmCancel" class="px-5 py-2 bg-[#f2f2f7] hover:bg-[#e5e5ea] text-[#3a3a3c] font-medium rounded-xl text-xs transition">Cancelar</button>
+      <button id="confirmDelete" class="px-5 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">🗑️ Eliminar</button>
     </div>
   </div>
 </div>
 
-<!-- ===== MEASUREMENT FORM MODAL ===== -->
-<div id="measOverlay" class="fixed inset-0 bg-black/70 z-50 hidden transition-opacity flex items-center justify-center p-4">
-  <div class="glass-strong rounded-2xl max-w-md w-full p-5 shadow-2xl scale-in">
+<!-- MEASUREMENT FORM MODAL -->
+<div id="measOverlay" class="fixed inset-0 bg-black/40 z-50 hidden transition-opacity flex items-center justify-center p-4">
+  <div class="ios-card-strong rounded-2xl max-w-md w-full p-6 shadow-2xl scale-in">
     <div class="flex items-center justify-between mb-4">
-      <h4 class="text-sm font-bold text-gray-100">Nueva medición</h4>
-      <button onclick="closeMeasForm()" class="p-1 hover:bg-gray-800 rounded-lg text-gray-400 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      <h4 class="text-sm font-bold text-[#1c1c1e]">Nueva medición</h4>
+      <button onclick="closeMeasForm()" class="p-1 hover:bg-[#f2f2f7] rounded-lg text-[#8e8e93] transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
     <form id="measForm" class="space-y-3">
-      <div><label class="block text-[10px] font-medium text-gray-400 mb-1">Fecha</label><input type="date" name="mdate" class="w-full bg-[#0a0a1a]/80 border border-gray-700/50 rounded-xl px-3 py-2 text-sm text-gray-100 focus:outline-none" required /></div>
+      <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">Fecha</label><input type="date" name="mdate" class="ios-input w-full" required /></div>
       <div class="grid grid-cols-3 gap-2">
-        <div><label class="block text-[10px] font-medium text-gray-400 mb-1">Peso (kg)</label><input type="number" name="weight" step="0.1" placeholder="75.5" class="w-full bg-[#0a0a1a]/80 border border-gray-700/50 rounded-xl px-3 py-2 text-sm text-gray-100 focus:outline-none" required /></div>
-        <div><label class="block text-[10px] font-medium text-gray-400 mb-1">% Grasa</label><input type="number" name="bodyFat" step="0.1" placeholder="12.5" class="w-full bg-[#0a0a1a]/80 border border-gray-700/50 rounded-xl px-3 py-2 text-sm text-gray-100 focus:outline-none" /></div>
-        <div><label class="block text-[10px] font-medium text-gray-400 mb-1">Cintura (cm)</label><input type="number" name="waist" step="0.5" placeholder="82" class="w-full bg-[#0a0a1a]/80 border border-gray-700/50 rounded-xl px-3 py-2 text-sm text-gray-100 focus:outline-none" /></div>
+        <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">Peso (kg)</label><input type="number" name="weight" step="0.1" placeholder="75.5" class="ios-input w-full" required /></div>
+        <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">% Grasa</label><input type="number" name="bodyFat" step="0.1" placeholder="12.5" class="ios-input w-full" /></div>
+        <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-1">Cintura (cm)</label><input type="number" name="waist" step="0.5" placeholder="82" class="ios-input w-full" /></div>
       </div>
-      <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-2 rounded-xl transition text-sm shadow-lg shadow-amber-500/20">Guardar</button>
+      <button type="submit" class="btn-ios-primary w-full text-sm">Guardar</button>
     </form>
   </div>
 </div>
@@ -353,731 +379,174 @@
 // ═══════════════════════════════════════════════
 // DATA
 // ═══════════════════════════════════════════════
-const SESSION_KEY = 'diario_entrenamiento_sessions';
-const MEAS_KEY = 'diario_entrenamiento_measurements';
-const GOAL_KEY = 'diario_entrenamiento_goal';
-
-const TIPOS = [
-  { id:'fuerza',label:'Fuerza',color:'#ef4444',badge:'bg-red-500/15 text-red-400 border-red-500/30' },
-  { id:'cardio',label:'Resistencia / Cardio',color:'#3b82f6',badge:'bg-blue-500/15 text-blue-400 border-blue-500/30' },
-  { id:'tecnica',label:'Técnica',color:'#22c55e',badge:'bg-green-500/15 text-green-400 border-green-500/30' },
-  { id:'velocidad',label:'Velocidad',color:'#a855f7',badge:'bg-purple-500/15 text-purple-400 border-purple-500/30' },
-  { id:'flexibilidad',label:'Flexibilidad / Movilidad',color:'#14b8a6',badge:'bg-teal-500/15 text-teal-400 border-teal-500/30' },
-  { id:'partido',label:'Partido / Competición',color:'#f59e0b',badge:'bg-amber-500/15 text-amber-400 border-amber-500/30' },
-  { id:'recuperacion',label:'Recuperación activa',color:'#64748b',badge:'bg-slate-500/15 text-slate-300 border-slate-500/30' },
+const SESSION_KEY='diario_entrenamiento_sessions',MEAS_KEY='diario_entrenamiento_measurements',GOAL_KEY='diario_entrenamiento_goal';
+const TIPOS=[
+  {id:'fuerza',label:'Fuerza',color:'#ef4444',badge:'bg-red-50 text-red-500 border-red-200'},
+  {id:'cardio',label:'Resistencia / Cardio',color:'#3b82f6',badge:'bg-blue-50 text-blue-500 border-blue-200'},
+  {id:'tecnica',label:'Técnica',color:'#22c55e',badge:'bg-green-50 text-green-600 border-green-200'},
+  {id:'velocidad',label:'Velocidad',color:'#a855f7',badge:'bg-purple-50 text-purple-500 border-purple-200'},
+  {id:'flexibilidad',label:'Flexibilidad / Movilidad',color:'#14b8a6',badge:'bg-teal-50 text-teal-500 border-teal-200'},
+  {id:'partido',label:'Partido / Competición',color:'#ff9500',badge:'bg-orange-50 text-orange-500 border-orange-200'},
+  {id:'recuperacion',label:'Recuperación activa',color:'#8e8e93',badge:'bg-gray-50 text-gray-500 border-gray-200'},
 ];
+const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAYS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+let sessions=[],measurements=[],weeklyGoal=300,currentYear,currentMonth,editingId=null,filterTipo=null,filterTag=null;
+let chartInstance=null,weeklyChartInstance=null,measChartInstance=null,pendingDeleteId=null;
 
-const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const DAYS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+function loadData(){try{sessions=JSON.parse(localStorage.getItem(SESSION_KEY))||[]}catch{sessions=[]}try{measurements=JSON.parse(localStorage.getItem(MEAS_KEY))||[]}catch{measurements=[]}weeklyGoal=parseInt(localStorage.getItem(GOAL_KEY))||300}
+function saveSessions(){localStorage.setItem(SESSION_KEY,JSON.stringify(sessions))}
+function saveMeasurements(){localStorage.setItem(MEAS_KEY,JSON.stringify(measurements))}
+function saveGoal(g){weeklyGoal=g;localStorage.setItem(GOAL_KEY,String(g))}
+function getTipo(id){return TIPOS.find(t=>t.id===id)||TIPOS[0]}
+function fmt(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+dd}
+function parseDate(str){const[y,m,d]=str.split('-').map(Number);return new Date(y,m-1,d)}
+function todayStr(){return fmt(new Date())}
+function srpe(s){return(parseInt(s.volume)||0)*(parseInt(s.intensity)||0)}
+function sessionsForMonth(y,m){const p=y+'-'+String(m+1).padStart(2,'0');return sessions.filter(s=>s.date.startsWith(p))}
+function escapeHtml(str){const d=document.createElement('div');d.textContent=str;return d.innerHTML}
+function getAllTags(){const t=new Set();sessions.forEach(s=>{(s.tags||[]).forEach(tg=>t.add(tg))});return[...t].sort()}
+function getStats(arr){const c=arr.length,v=arr.reduce((a,s)=>a+(parseInt(s.volume)||0),0),sr=arr.reduce((a,s)=>a+srpe(s),0),ai=c?(arr.reduce((a,s)=>a+(parseInt(s.intensity)||0),0)/c):0;return{count:c,vol:v,srpe:sr,avgInt:ai.toFixed(1)}}
+function nthWeekMonday(d){const dd=new Date(d);dd.setDate(dd.getDate()-(dd.getDay()+6)%7);dd.setHours(0,0,0,0);return dd}
+function weeklyTotals(n){const t=new Date();t.setHours(0,0,0,0);const ew=nthWeekMonday(t);ew.setDate(ew.getDate()+7);const wks=[];for(let i=0;i<n;i++){const we=new Date(ew);we.setDate(we.getDate()-i*7);const ws=new Date(we);ws.setDate(ws.getDate()-7);wks.unshift({start:ws,end:we,label:ws.toLocaleDateString('es-ES',{day:'numeric',month:'short'}),vol:0,srpe:0,count:0})}
+  sessions.forEach(s=>{const sd=parseDate(s.date),vol=parseInt(s.volume)||0;wks.forEach(w=>{if(sd>=w.start&&sd<w.end){w.vol+=vol;w.srpe+=srpe(s);w.count++}})});return wks}
 
-let sessions = []; let measurements = []; let weeklyGoal = 300;
-let currentYear, currentMonth, editingId = null, filterTipo = null, filterTag = null;
-let chartInstance = null, weeklyChartInstance = null, measChartInstance = null, pendingDeleteId = null;
-
-// ═══════════════════════════════════════════════
-// STORAGE
-// ═══════════════════════════════════════════════
-function loadData() {
-  try { sessions = JSON.parse(localStorage.getItem(SESSION_KEY)) || []; } catch { sessions = []; }
-  try { measurements = JSON.parse(localStorage.getItem(MEAS_KEY)) || []; } catch { measurements = []; }
-  weeklyGoal = parseInt(localStorage.getItem(GOAL_KEY)) || 300;
-}
-function saveSessions() { localStorage.setItem(SESSION_KEY, JSON.stringify(sessions)); }
-function saveMeasurements() { localStorage.setItem(MEAS_KEY, JSON.stringify(measurements)); }
-function saveGoal(g) { weeklyGoal = g; localStorage.setItem(GOAL_KEY, String(g)); }
-
-// ═══════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════
-function getTipo(id) { return TIPOS.find(t=>t.id===id)||TIPOS[0]; }
-function fmt(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+dd;}
-function parseDate(str){const[y,m,d]=str.split('-').map(Number);return new Date(y,m-1,d);}
-function todayStr(){return fmt(new Date());}
-function srpe(s){return (parseInt(s.volume)||0)*(parseInt(s.intensity)||0);}
-function sessionsForMonth(year,month){const p=year+'-'+String(month+1).padStart(2,'0');return sessions.filter(s=>s.date.startsWith(p));}
-function escapeHtml(str){const d=document.createElement('div');d.textContent=str;return d.innerHTML;}
-function getAllTags(){const t=new Set();sessions.forEach(s=>{(s.tags||[]).forEach(tg=>t.add(tg))});return[...t].sort();}
-
-function getStats(arr){
-  const c=arr.length,v=arr.reduce((a,s)=>a+(parseInt(s.volume)||0),0),sr=arr.reduce((a,s)=>a+srpe(s),0);
-  const ai=c?(arr.reduce((a,s)=>a+(parseInt(s.intensity)||0),0)/c):0;
-  return{count:c,vol:v,srpe:sr,avgInt:ai.toFixed(1)};
-}
-
-function nthWeekMonday(date){
-  const d=new Date(date);d.setDate(d.getDate()-(d.getDay()+6)%7);
-  d.setHours(0,0,0,0);return d;
-}
-
-function getWeekId(dateStr){
-  const d=parseDate(dateStr);return nthWeekMonday(d).toISOString().slice(0,10);
-}
-
-function weeklyTotals(numWeeks){
-  const today=new Date();today.setHours(0,0,0,0);
-  const endWeek=nthWeekMonday(today);endWeek.setDate(endWeek.getDate()+7);
-  const weeks=[];
-  for(let i=0;i<numWeeks;i++){
-    const wEnd=new Date(endWeek);wEnd.setDate(wEnd.getDate()-i*7);
-    const wStart=new Date(wEnd);wStart.setDate(wStart.getDate()-7);
-    const label=wStart.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
-    weeks.unshift({start:wStart,end:wEnd,label,vol:0,srpe:0,count:0});
-  }
-  sessions.forEach(s=>{
-    const sd=parseDate(s.date);const vol=parseInt(s.volume)||0;
-    weeks.forEach(w=>{
-      if(sd>=w.start&&sd<w.end){w.vol+=vol;w.srpe+=srpe(s);w.count++;}
-    });
-  });
-  return weeks;
-}
-
-// ═══════════════════════════════════════════════
 // ACWR
-// ═══════════════════════════════════════════════
-function calcAcwr(){
-  const today=new Date();today.setHours(23,59,59,0);
-  const sevenAgo=new Date(today);sevenAgo.setDate(sevenAgo.getDate()-7);
-  const twentyEightAgo=new Date(today);twentyEightAgo.setDate(twentyEightAgo.getDate()-28);
+function calcAcwr(){const t=new Date();t.setHours(23,59,59,0);const sa=new Date(t);sa.setDate(sa.getDate()-7);const ca=new Date(t);ca.setDate(ca.getDate()-28);let ac=0,cd=0;
+  sessions.forEach(s=>{const sd=parseDate(s.date),l=srpe(s);if(sd>=sa&&sd<=t)ac+=l;if(sd>=ca&&sd<=t)cd+=l});const ch=(cd/28)*7;const r=ch>0?+(ac/ch).toFixed(2):0;return{acute:ac,chronic:Math.round(ch),ratio:r}}
+function renderAcwr(){const sec=document.getElementById('acwrSection'),a=calcAcwr();if(sessions.length<7){sec.classList.add('hidden');return}sec.classList.remove('hidden');
+  document.getElementById('acwrAcute').textContent=a.acute+' UA';document.getElementById('acwrChronic').textContent=a.chronic+' UA';
+  const r=a.ratio,el=document.getElementById('acwrRatio'),box=document.getElementById('acwrBox');
+  if(r===0){el.textContent='—';box.className='text-center px-3 py-1.5 rounded-xl ios-inset';return}
+  el.textContent=r.toFixed(2);let p=Math.min((r/2)*100,100);if(p<5)p=5;document.getElementById('acwrBar').style.width=p+'%';
+  let c;if(r<0.8)c='bg-yellow-50 text-yellow-600';else if(r<=1.3)c='bg-green-50 text-green-600';else if(r<=1.5)c='bg-orange-50 text-orange-600';else c='bg-red-50 text-red-600';
+  box.className='text-center px-3 py-1.5 rounded-xl '+c;}
 
-  let acute=0,chronicDays=0;
-  sessions.forEach(s=>{
-    const sd=parseDate(s.date);const load=srpe(s);
-    if(sd>=sevenAgo&&sd<=today) acute+=load;
-    if(sd>=twentyEightAgo&&sd<=today){chronicDays+=load;}
-  });
-  const chronic=(chronicDays/28)*7;
-  const ratio=chronic>0?+(acute/chronic).toFixed(2):0;
-  return{acute,chronic:Math.round(chronic),ratio};
-}
-
-function renderAcwr(){
-  const sec=document.getElementById('acwrSection');const acwr=calcAcwr();
-  if(sessions.length<7){sec.classList.add('hidden');return;}
-  sec.classList.remove('hidden');
-  document.getElementById('acwrAcute').textContent=acwr.acute+' UA';
-  document.getElementById('acwrChronic').textContent=acwr.chronic+' UA';
-  const r=acwr.ratio;const el=document.getElementById('acwrRatio');const box=document.getElementById('acwrBox');
-  if(r===0){el.textContent='—';box.className='text-center px-3 py-1.5 rounded-xl bg-gray-800/40';return;}
-  el.textContent=r.toFixed(2);
-  let pct=Math.min((r/2)*100,100);if(pct<5)pct=5;
-  document.getElementById('acwrBar').style.width=pct+'%';
-  let color;if(r<0.8){color='bg-yellow-500/20 text-yellow-400';}else if(r<=1.3){color='bg-emerald-500/20 text-emerald-400';}else if(r<=1.5){color='bg-orange-500/20 text-orange-400';}else{color='bg-red-500/20 text-red-400';}
-  box.className='text-center px-3 py-1.5 rounded-xl '+color;
-}
-
-// ═══════════════════════════════════════════════
 // CALENDAR
-// ═══════════════════════════════════════════════
-function renderCalendar(){
-  const grid=document.getElementById('calendarGrid'),title=document.getElementById('monthTitle');
-  title.textContent=MONTHS[currentMonth]+' '+currentYear;
-  const firstDay=new Date(currentYear,currentMonth,1);
-  let sd=firstDay.getDay();sd=sd===0?6:sd-1;
-  const dim=new Date(currentYear,currentMonth+1,0).getDate(),ms=sessionsForMonth(currentYear,currentMonth),today=todayStr();
-  const dm={};ms.forEach(s=>{const d=parseInt(s.date.split('-')[2],10);if(!dm[d])dm[d]=[];dm[d].push(s);});
-  let h='';
-  for(let i=0;i<sd;i++)h+='<div class="cal-cell bg-transparent"></div>';
-  for(let d=1;d<=dim;d++){
-    const ds=fmt(new Date(currentYear,currentMonth,d));
-    const ss=dm[d]||[];const hs=ss.length>0;const fc=hs?getTipo(ss[0].tipo).color:'';
-    let cl='cal-cell bg-[#12122a]/60 p-1 sm:p-1.5 flex flex-col justify-start';
-    if(ds===today)cl+=' today';if(hs)cl+=' has-session';
-    let b='';
-    if(hs){
-      const sh=ss.slice(0,2),ex=ss.length-2;
-      b='<div class="flex gap-0.5 mt-auto pt-0.5">'+sh.map(s=>`<span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full" style="background:${getTipo(s.tipo).color}"></span>`).join('')+(ex>0?`<span class="text-[7px] text-gray-600 ml-0.5">+${ex}</span>`:'')+'</div>';
-    }
-    h+=`<div class="${cl}" style="${hs?'--dot-color:'+fc:''}" data-date="${ds}"><span class="text-xs sm:text-sm font-medium ${ds===today?'text-amber-400':hs?'text-gray-200':'text-gray-600'}">${d}</span>${b}</div>`;
-  }
-  grid.innerHTML=h;
-  grid.querySelectorAll('.cal-cell[data-date]').forEach(el=>{
-    el.addEventListener('click',()=>{
-      const date=el.dataset.date,ds=sessions.filter(s=>s.date===date);
-      ds.length>0?showDayDetail(date,ds):openForm(date);
-    });
-  });
-  renderLegend();renderSessionList();renderStats();updateStreak();renderFilterChips();
-  renderChart();renderWeeklyChart();renderAcwr();renderComparisonOpts();
-}
+function renderCalendar(){const g=document.getElementById('calendarGrid'),t=document.getElementById('monthTitle');t.textContent=MONTHS[currentMonth]+' '+currentYear;
+  const fd=new Date(currentYear,currentMonth,1);let sd=fd.getDay();sd=sd===0?6:sd-1;
+  const dim=new Date(currentYear,currentMonth+1,0).getDate(),ms=sessionsForMonth(currentYear,currentMonth),tod=todayStr();
+  const dm={};ms.forEach(s=>{const d=parseInt(s.date.split('-')[2],10);if(!dm[d])dm[d]=[];dm[d].push(s)});
+  let h='';for(let i=0;i<sd;i++)h+='<div class="cal-cell bg-transparent"></div>';
+  for(let d=1;d<=dim;d++){const ds=fmt(new Date(currentYear,currentMonth,d));const ss=dm[d]||[],hs=ss.length>0,fc=hs?getTipo(ss[0].tipo).color:'';
+    let cl='cal-cell p-1 sm:p-1.5 flex flex-col justify-start bg-white border border-[#f2f2f7]';if(ds===tod)cl+=' today';if(hs)cl+=' has-session';
+    let b='';if(hs){const sh=ss.slice(0,2),ex=ss.length-2;b='<div class="flex gap-0.5 mt-auto pt-0.5">'+sh.map(s=>`<span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full" style="background:${getTipo(s.tipo).color}"></span>`).join('')+(ex>0?`<span class="text-[7px] text-[#aeaeb2] ml-0.5">+${ex}</span>`:'')+'</div>'}
+    h+=`<div class="${cl}" style="${hs?'--dot-color:'+fc:''}" data-date="${ds}"><span class="day-num text-xs sm:text-sm font-medium ${ds===tod?'text-[#ff5a1f]':hs?'text-[#1c1c1e]':'text-[#aeaeb2]'}">${d}</span>${b}</div>`}
+  g.innerHTML=h;g.querySelectorAll('.cal-cell[data-date]').forEach(el=>{el.addEventListener('click',()=>{const d=el.dataset.date,ds=sessions.filter(s=>s.date===d);ds.length>0?showDayDetail(d,ds):openForm(d)})});
+  renderLegend();renderSessionList();renderStats();updateStreak();renderFilterChips();renderChart();renderWeeklyChart();renderAcwr();renderComparisonOpts();}
+function renderLegend(){document.getElementById('legendRow').innerHTML=TIPOS.map(t=>`<span class="inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full" style="background:${t.color}"></span>${t.label}</span>`).join('')}
 
-function renderLegend(){
-  document.getElementById('legendRow').innerHTML=TIPOS.map(t=>`<span class="inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full" style="background:${t.color}"></span>${t.label}</span>`).join('');
-}
-
-// ═══════════════════════════════════════════════
 // SESSION LIST
-// ═══════════════════════════════════════════════
-function renderSessionList(){
-  const el=document.getElementById('sessionList'),empty=document.getElementById('emptyMonth');
+function renderSessionList(){const el=document.getElementById('sessionList'),em=document.getElementById('emptyMonth');
   let ms=sessionsForMonth(currentYear,currentMonth).sort((a,b)=>b.date.localeCompare(a.date));
-  if(filterTipo)ms=ms.filter(s=>s.tipo===filterTipo);
-  if(filterTag)ms=ms.filter(s=>(s.tags||[]).includes(filterTag));
-  if(ms.length===0){el.innerHTML='';empty.classList.remove('hidden');return;}
-  empty.classList.add('hidden');
-  el.innerHTML=ms.map(s=>{
-    const t=getTipo(s.tipo),f=parseDate(s.date),ds=DAYS[f.getDay()],[,m,d]=s.date.split('-');
-    const tags=(s.tags||[]).map(tg=>`<span class="text-[8px] bg-amber-500/10 text-amber-400/80 px-1.5 py-0.5 rounded-full">${tg}</span>`).join('');
-    return `<div class="flex items-center gap-2.5 bg-[#12122a]/60 rounded-xl px-3 py-2 border border-gray-800/30 fade-in group hover:border-gray-700/50 transition cursor-pointer" onclick="showDayDetail('${s.date}',sessions.filter(x=>x.date==='${s.date}'))">
-      <div class="text-center min-w-[2rem]"><div class="text-xs font-bold text-gray-300">${d}/${m}</div><div class="text-[9px] text-gray-600">${ds}</div></div>
+  if(filterTipo)ms=ms.filter(s=>s.tipo===filterTipo);if(filterTag)ms=ms.filter(s=>(s.tags||[]).includes(filterTag));
+  if(!ms.length){el.innerHTML='';em.classList.remove('hidden');return}em.classList.add('hidden');
+  el.innerHTML=ms.map(s=>{const t=getTipo(s.tipo),f=parseDate(s.date),ds=DAYS[f.getDay()],[,m,d]=s.date.split('-');
+    const tags=(s.tags||[]).map(tg=>`<span class="text-[8px] bg-orange-50 text-[#ff5a1f]/80 px-1.5 py-0.5 rounded-full">${tg}</span>`).join('');
+    return `<div class="flex items-center gap-2.5 bg-white rounded-xl px-3 py-2 border border-[#e5e5ea] fade-in group hover:border-[#d1d1d6] transition cursor-pointer" onclick="showDayDetail('${s.date}',sessions.filter(x=>x.date==='${s.date}'))">
+      <div class="text-center min-w-[2rem]"><div class="text-xs font-bold text-[#1c1c1e]">${d}/${m}</div><div class="text-[9px] text-[#aeaeb2]">${ds}</div></div>
       <span class="type-badge ${t.badge} border">${t.label}</span>
       ${tags?'<div class="flex gap-0.5 flex-wrap">'+tags+'</div>':''}
-      <div class="ml-auto flex items-center gap-2 text-[10px] text-gray-400">
-        <span class="font-mono font-semibold text-gray-300">${s.volume}min</span>
-        <span class="font-mono text-amber-400/70">RPE ${s.intensity}</span>
-        <span class="font-mono text-emerald-400/70 hidden sm:inline">${srpe(s)}UA</span>
-        <button onclick="event.stopPropagation();openEdit('${s.id}')" class="p-0.5 hover:text-amber-400 transition opacity-0 group-hover:opacity-100"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
-        <button onclick="event.stopPropagation();showDeleteConfirm('${s.id}')" class="p-0.5 hover:text-red-400 transition opacity-0 group-hover:opacity-100"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
-      </div>
-    </div>`;
-  }).join('');
-}
+      <div class="ml-auto flex items-center gap-2 text-[10px] text-[#8e8e93]">
+        <span class="font-mono font-semibold text-[#3a3a3c]">${s.volume}min</span>
+        <span class="font-mono text-[#ff9500]">RPE ${s.intensity}</span>
+        <span class="font-mono text-[#34c759] hidden sm:inline">${srpe(s)}UA</span>
+        <button onclick="event.stopPropagation();openEdit('${s.id}')" class="p-0.5 hover:text-[#ff5a1f] transition opacity-0 group-hover:opacity-100"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+        <button onclick="event.stopPropagation();showDeleteConfirm('${s.id}')" class="p-0.5 hover:text-red-500 transition opacity-0 group-hover:opacity-100"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+      </div></div>`}).join('')}
 
-// ═══════════════════════════════════════════════
 // FILTER + SEARCH + COMPARISON
-// ═══════════════════════════════════════════════
-function renderFilterChips(){
-  const el=document.getElementById('filterChips');
-  let h=`<button class="text-[10px] px-2 py-1 rounded-full border transition ${!filterTipo?'bg-amber-500/20 border-amber-500/40 text-amber-400':'bg-transparent border-gray-700/50 text-gray-400 hover:border-gray-500'}" data-tipo="">Todas</button>`;
-  TIPOS.forEach(t=>{const a=filterTipo===t.id;h+=`<button class="text-[10px] px-2 py-1 rounded-full border transition ${a?'bg-amber-500/20 border-amber-500/40 text-amber-400':'bg-transparent border-gray-700/50 text-gray-400 hover:border-gray-500'}" data-tipo="${t.id}">${t.label}</button>`;});
-  // Tag chips
-  const allTags=getAllTags();
-  allTags.forEach(tg=>{const a=filterTag===tg;h+=`<button class="tag-chip text-[10px] px-2 py-1 rounded-full border transition ${a?'active':'bg-transparent border-gray-700/50 text-gray-400 hover:border-gray-500'}" data-tag="${tg}">${tg}</button>`;});
-  el.innerHTML=h;
-  el.querySelectorAll('[data-tipo]').forEach(b=>b.addEventListener('click',()=>{filterTipo=b.dataset.tipo||null;filterTag=null;renderFilterChips();renderSessionList();}));
-  el.querySelectorAll('[data-tag]').forEach(b=>b.addEventListener('click',()=>{filterTag=b.dataset.tag||null;filterTipo=null;renderFilterChips();renderSessionList();}));
-}
+function renderFilterChips(){const el=document.getElementById('filterChips');
+  let h=`<button class="text-[10px] px-2 py-1 rounded-full border transition ${!filterTipo?'bg-orange-50 border-orange-200 text-[#ff5a1f]':'bg-transparent border-[#e5e5ea] text-[#8e8e93] hover:border-[#d1d1d6]'}" data-tipo="">Todas</button>`;
+  TIPOS.forEach(t=>{const a=filterTipo===t.id;h+=`<button class="text-[10px] px-2 py-1 rounded-full border transition ${a?'bg-orange-50 border-orange-200 text-[#ff5a1f]':'bg-transparent border-[#e5e5ea] text-[#8e8e93] hover:border-[#d1d1d6]'}" data-tipo="${t.id}">${t.label}</button>`});
+  getAllTags().forEach(tg=>{const a=filterTag===tg;h+=`<button class="tag-chip text-[10px] px-2 py-1 rounded-full border transition ${a?'active':'bg-transparent border-[#e5e5ea] text-[#8e8e93]'}" data-tag="${tg}">${tg}</button>`});
+  el.innerHTML=h;el.querySelectorAll('[data-tipo]').forEach(b=>b.addEventListener('click',()=>{filterTipo=b.dataset.tipo||null;filterTag=null;renderFilterChips();renderSessionList()}));el.querySelectorAll('[data-tag]').forEach(b=>b.addEventListener('click',()=>{filterTag=b.dataset.tag||null;filterTipo=null;renderFilterChips();renderSessionList()}))}
+function renderComparisonOpts(){const sel=document.getElementById('compareMonth'),cur=currentYear+'-'+String(currentMonth+1).padStart(2,'0');let o='<option value="">—</option>';const s=new Set();sessions.forEach(s=>{const k=s.date.slice(0,7);if(k!==cur&&!s.has(k)){s.add(k);o+=`<option value="${k}">${MONTHS[parseInt(k.split('-')[1])-1]} ${k.split('-')[0]}</option>`}});sel.innerHTML=o;sel.onchange=()=>{const bx=document.getElementById('comparisonBox');if(!sel.value){bx.classList.add('hidden');return}const[yr,mth]=sel.value.split('-').map(Number),ms=sessionsForMonth(yr,mth-1),ms2=sessionsForMonth(currentYear,currentMonth);if(!ms.length||!ms2.length){bx.classList.add('hidden');return}bx.classList.remove('hidden');const s1=getStats(ms),s2=getStats(ms2);function diff(a,b){if(a>b)return'<span class="text-green-600">▲ +'+(a-b)+'</span>';if(a<b)return'<span class="text-red-500">▼ '+(a-b)+'</span>';return'<span class="text-[#aeaeb2]">—</span>'}document.getElementById('compOtherLabel').textContent=MONTHS[mth-1]+' '+yr;document.getElementById('compCurrentLabel').textContent=MONTHS[currentMonth]+' '+currentYear;document.getElementById('compCurrentContent').innerHTML='<div>'+s2.count+' ses</div><div>'+s2.vol+' min</div><div>RPE '+s2.avgInt+'</div><div>'+s2.srpe+' UA</div>';document.getElementById('compOtherContent').innerHTML='<div>'+s1.count+' ses '+diff(s2.count,s1.count)+'</div><div>'+s1.vol+' min '+diff(s2.vol,s1.vol)+'</div><div>RPE '+s1.avgInt+'</div><div>'+s1.srpe+' UA</div>'}}
+function setupSearch(){const i=document.getElementById('searchNotes');let t;i.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(()=>{const q=i.value.toLowerCase().trim();document.querySelectorAll('#sessionList>div').forEach(el=>{const txt=el.textContent.toLowerCase();el.style.display=q&&!txt.includes(q)?'none':'flex'})},200)})}
 
-function renderComparisonOpts(){
-  const sel=document.getElementById('compareMonth');const cur=`${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
-  let opts='<option value="">—</option>';
-  const seen=new Set();sessions.forEach(s=>{const k=s.date.slice(0,7);if(k!==cur&&!seen.has(k)){seen.add(k);opts+=`<option value="${k}">${MONTHS[parseInt(k.split('-')[1])-1]} ${k.split('-')[0]}</option>`;}});
-  sel.innerHTML=opts;
-  sel.onchange=()=>{
-    const box=document.getElementById('comparisonBox');
-    if(!sel.value){box.classList.add('hidden');return;}
-    const [yr,mth]=sel.value.split('-').map(Number);const ms=sessionsForMonth(yr,mth-1);
-    const ms2=sessionsForMonth(currentYear,currentMonth);
-    if(!ms.length||!ms2.length){box.classList.add('hidden');return;}
-    box.classList.remove('hidden');
-    const s1=getStats(ms),s2=getStats(ms2);
-    function diff(a,b){if(a>b)return`<span class="text-emerald-400">▲ +${a-b}</span>`;if(a<b)return`<span class="text-red-400">▼ ${a-b}</span>`;return`<span class="text-gray-500">—</span>`;}
-    document.getElementById('compOtherLabel').textContent=MONTHS[mth-1]+' '+yr;
-    document.getElementById('compCurrentLabel').textContent=MONTHS[currentMonth]+' '+currentYear;
-    document.getElementById('compCurrentContent').innerHTML=`<div>${s2.count} sesiones</div><div>${s2.vol} min</div><div>RPE ${s2.avgInt}</div><div>${s2.srpe} UA</div>`;
-    document.getElementById('compOtherContent').innerHTML=`<div>${s1.count} sesiones ${diff(s2.count,s1.count)}</div><div>${s1.vol} min ${diff(s2.vol,s1.vol)}</div><div>RPE ${s1.avgInt}</div><div>${s1.srpe} UA</div>`;
-  };
-}
-
-// ═══════════════════════════════════════════════
-// NOTES SEARCH
-// ═══════════════════════════════════════════════
-function setupSearch(){
-  const inp=document.getElementById('searchNotes');let timer;
-  inp.addEventListener('input',()=>{
-    clearTimeout(timer);timer=setTimeout(()=>{
-      const q=inp.value.toLowerCase().trim();
-      const items=document.querySelectorAll('#sessionList > div');
-      items.forEach(el=>{
-        const txt=el.textContent.toLowerCase();
-        el.style.display=q&&!txt.includes(q)?'none':'flex';
-      });
-    },200);
-  });
-}
-
-// ═══════════════════════════════════════════════
 // CHARTS
-// ═══════════════════════════════════════════════
-function renderChart(){
-  const sec=document.getElementById('chartEvolutionSection'),canvas=document.getElementById('evolutionChart');
-  if(!canvas)return;
-  const ms=sessionsForMonth(currentYear,currentMonth).sort((a,b)=>a.date.localeCompare(b.date));
-  if(ms.length<2){sec.classList.add('hidden');return;}sec.classList.remove('hidden');
-  const labels=ms.map(s=>parseInt(s.date.split('-')[2],10)),volumes=ms.map(s=>parseInt(s.volume)||0),srpes=ms.map(s=>srpe(s));
-  if(chartInstance){chartInstance.destroy();chartInstance=null;}
-  chartInstance=new Chart(canvas.getContext('2d'),{
-    type:'bar',
-    data:{labels,datasets:[
-      {label:'Vol (min)',data:volumes,backgroundColor:'rgba(245,158,11,0.5)',borderColor:'rgba(245,158,11,0.9)',borderWidth:1,borderRadius:3,order:2,yAxisID:'y'},
-      {label:'sRPE (UA)',data:srpes,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,0.12)',borderWidth:2,pointBackgroundColor:'#ef4444',pointRadius:3,pointHoverRadius:5,type:'line',tension:0.3,order:1,yAxisID:'y1'}
-    ]},
-    options:{responsive:true,maintainAspectRatio:true,aspectRatio:window.innerWidth<640?1.2:2.2,
-      plugins:{legend:{labels:{color:'#9ca3af',font:{size:9,family:'Inter'},boxWidth:10,boxHeight:7,padding:8},position:'bottom'},
-        tooltip:{backgroundColor:'#1c1c36',titleColor:'#e5e7eb',bodyColor:'#d1d5db',borderColor:'#374151',borderWidth:1,padding:7,bodyFont:{size:10},callbacks:{title:items=>'Día '+items[0].label}}},
-      scales:{x:{grid:{color:'rgba(75,85,99,0.15)'},ticks:{color:'#6b7280',font:{size:9}}},
-        y:{beginAtZero:true,position:'left',title:{display:true,text:'min / UA',color:'#9ca3af',font:{size:8}},grid:{color:'rgba(75,85,99,0.15)'},ticks:{color:'#6b7280',font:{size:8}}},
-        y1:{beginAtZero:true,position:'right',grid:{display:false},ticks:{color:'#6b7280',font:{size:8}}}}}
-  });
-}
+function renderChart(){const sec=document.getElementById('chartEvolutionSection'),c=document.getElementById('evolutionChart');if(!c)return;const ms=sessionsForMonth(currentYear,currentMonth).sort((a,b)=>a.date.localeCompare(b.date));if(ms.length<2){sec.classList.add('hidden');return}sec.classList.remove('hidden');const l=ms.map(s=>parseInt(s.date.split('-')[2],10)),v=ms.map(s=>parseInt(s.volume)||0),sr=ms.map(s=>srpe(s));if(chartInstance){chartInstance.destroy()}chartInstance=new Chart(c.getContext('2d'),{type:'bar',data:{labels:l,datasets:[{label:'Vol (min)',data:v,backgroundColor:'rgba(255,107,53,0.35)',borderColor:'rgba(255,107,53,0.7)',borderWidth:1,borderRadius:3,order:2,yAxisID:'y'},{label:'sRPE (UA)',data:sr,borderColor:'#ff3b30',backgroundColor:'rgba(255,59,48,0.08)',borderWidth:2,pointBackgroundColor:'#ff3b30',pointRadius:3,pointHoverRadius:5,type:'line',tension:0.3,order:1,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:window.innerWidth<640?1.2:2.2,plugins:{legend:{labels:{color:'#8e8e93',font:{size:9,family:'-apple-system'},boxWidth:10,boxHeight:7,padding:8},position:'bottom'},tooltip:{backgroundColor:'#ffffff',titleColor:'#1c1c1e',bodyColor:'#3a3a3c',borderColor:'#e5e5ea',borderWidth:1,padding:7,bodyFont:{size:10},callbacks:{title:items=>'Día '+items[0].label}}},scales:{x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#aeaeb2',font:{size:9}}},y:{beginAtZero:true,position:'left',title:{display:true,text:'min / UA',color:'#aeaeb2',font:{size:8}},grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#aeaeb2',font:{size:8}}},y1:{beginAtZero:true,position:'right',grid:{display:false},ticks:{color:'#aeaeb2',font:{size:8}}}}}})}
+function renderWeeklyChart(){const sec=document.getElementById('chartWeeklySection'),c=document.getElementById('weeklyChart');if(!c)return;const w=weeklyTotals(12);if(w.every(x=>x.count===0)){sec.classList.add('hidden');return}sec.classList.remove('hidden');if(weeklyChartInstance){weeklyChartInstance.destroy()}weeklyChartInstance=new Chart(c.getContext('2d'),{type:'bar',data:{labels:w.map(x=>x.label),datasets:[{label:'Vol (min)',data:w.map(x=>x.vol),backgroundColor:'rgba(52,199,89,0.5)',borderColor:'rgba(52,199,89,0.9)',borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:window.innerWidth<640?1.2:2.5,plugins:{legend:{labels:{color:'#8e8e93',font:{size:9},boxWidth:10,boxHeight:7,padding:6},position:'bottom'},tooltip:{backgroundColor:'#ffffff',titleColor:'#1c1c1e',bodyColor:'#3a3a3c',borderColor:'#e5e5ea',borderWidth:1,padding:6,bodyFont:{size:9}}},scales:{x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#aeaeb2',font:{size:8}}},y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#aeaeb2',font:{size:8}}}}}})}
+function renderStats(){const ms=sessionsForMonth(currentYear,currentMonth),s=getStats(ms);document.getElementById('statSessions').textContent=s.count;document.getElementById('statVolume').textContent=s.vol+' min';document.getElementById('statSrpe').textContent=s.srpe+' UA'}
+function updateStreak(){const el=document.getElementById('statStreak');if(!el)return;const s=[...sessions].sort((a,b)=>b.date.localeCompare(a.date));if(!s.length){el.textContent='—';el.className='text-lg font-bold font-mono text-[#aeaeb2]';return}const ud=[...new Set(s.map(x=>x.date))].sort((a,b)=>b.localeCompare(a));let i=0;const t=new Date();while(i<ud.length){if(Math.round((t-parseDate(ud[i]))/(864e5))===i)i++;else break}if(!i){el.textContent='—';el.className='text-lg font-bold font-mono text-[#aeaeb2]'}else{el.textContent=i+' día'+(i>1?'s':'');el.className='text-lg font-bold font-mono text-[#ff5a1f]'}}
 
-function renderWeeklyChart(){
-  const sec=document.getElementById('chartWeeklySection'),canvas=document.getElementById('weeklyChart');
-  if(!canvas)return;
-  const weeks=weeklyTotals(12);
-  if(weeks.every(w=>w.count===0)){sec.classList.add('hidden');return;}sec.classList.remove('hidden');
-  if(weeklyChartInstance){weeklyChartInstance.destroy();weeklyChartInstance=null;}
-  weeklyChartInstance=new Chart(canvas.getContext('2d'),{
-    type:'bar',
-    data:{labels:weeks.map(w=>w.label),datasets:[
-      {label:'Vol (min)',data:weeks.map(w=>w.vol),backgroundColor:'rgba(16,185,129,0.5)',borderColor:'rgba(16,185,129,0.9)',borderWidth:1,borderRadius:3}
-    ]},
-    options:{responsive:true,maintainAspectRatio:true,aspectRatio:window.innerWidth<640?1.2:2.5,
-      plugins:{legend:{labels:{color:'#9ca3af',font:{size:9},boxWidth:10,boxHeight:7,padding:6},position:'bottom'},
-        tooltip:{backgroundColor:'#1c1c36',titleColor:'#e5e7eb',bodyColor:'#d1d5db',borderColor:'#374151',borderWidth:1,padding:6,bodyFont:{size:9}}},
-      scales:{x:{grid:{color:'rgba(75,85,99,0.12)'},ticks:{color:'#6b7280',font:{size:8}}},
-        y:{beginAtZero:true,grid:{color:'rgba(75,85,99,0.12)'},ticks:{color:'#6b7280',font:{size:8}}}}}
-  });
-}
+// PANEL
+function openPanel(t,b){document.getElementById('panelTitle').textContent=t;document.getElementById('panelBody').innerHTML=b;document.getElementById('panelOverlay').classList.remove('hidden');document.getElementById('sidePanel').classList.remove('translate-x-full');document.getElementById('sidePanel').classList.add('open');document.body.style.overflow='hidden'}
+function closePanel(){document.getElementById('panelOverlay').classList.add('hidden');document.getElementById('sidePanel').classList.add('translate-x-full');document.getElementById('sidePanel').classList.remove('open');document.body.style.overflow=''}
+function openPanelDirect(){document.getElementById('panelOverlay').classList.remove('hidden');document.getElementById('sidePanel').classList.remove('translate-x-full');document.getElementById('sidePanel').classList.add('open');document.body.style.overflow='hidden'}
 
-// ═══════════════════════════════════════════════
-// STATS + STREAK
-// ═══════════════════════════════════════════════
-function renderStats(){
-  const ms=sessionsForMonth(currentYear,currentMonth),s=getStats(ms);
-  document.getElementById('statSessions').textContent=s.count;
-  document.getElementById('statVolume').textContent=s.vol+' min';
-  document.getElementById('statSrpe').textContent=s.srpe+' UA';
-}
-
-function updateStreak(){
-  const el=document.getElementById('statStreak');
-  if(!el)return;
-  const sorted=[...sessions].sort((a,b)=>b.date.localeCompare(a.date));
-  if(!sorted.length){el.textContent='—';el.className='text-lg font-bold font-mono text-gray-500';return;}
-  const ud=[...new Set(sorted.map(s=>s.date))].sort((a,b)=>b.localeCompare(a));
-  let i=0;const today=new Date();
-  while(i<ud.length){const d=parseDate(ud[i]);if(Math.round((today-d)/(864e5))===i){i++;}else break;}
-  if(i===0){el.textContent='—';el.className='text-lg font-bold font-mono text-gray-500';}
-  else{el.textContent=i+' día'+(i>1?'s':'');el.className='text-lg font-bold font-mono text-amber-400';}
-}
-
-// ═══════════════════════════════════════════════
-// SIDE PANEL
-// ═══════════════════════════════════════════════
-function openPanel(title,bodyHtml){
-  document.getElementById('panelTitle').textContent=title;
-  document.getElementById('panelBody').innerHTML=bodyHtml;
-  document.getElementById('panelOverlay').classList.remove('hidden');
-  document.getElementById('sidePanel').classList.remove('translate-x-full');
-  document.getElementById('sidePanel').classList.add('open');
-  document.body.style.overflow='hidden';
-}
-function closePanel(){
-  document.getElementById('panelOverlay').classList.add('hidden');
-  document.getElementById('sidePanel').classList.add('translate-x-full');
-  document.getElementById('sidePanel').classList.remove('open');
-  document.body.style.overflow='';
-}
-function openPanelDirect() {
-  document.getElementById('panelOverlay').classList.remove('hidden');
-  document.getElementById('sidePanel').classList.remove('translate-x-full');
-  document.getElementById('sidePanel').classList.add('open');
-  document.body.style.overflow='hidden';
-}
-
-// ═══════════════════════════════════════════════
 // DAY DETAIL
-// ═══════════════════════════════════════════════
-function showDayDetail(dateStr,daySessions){
-  const f=parseDate(dateStr),ds=DAYS[f.getDay()],[,m,d]=dateStr.split('-');
-  const s=getStats(daySessions);
-  let body=`<div class="mb-3 pb-2 border-b border-gray-800/40"><div class="text-xl font-bold text-gray-100">${d} de ${MONTHS[parseInt(m)-1]}</div><div class="text-xs text-gray-500">${ds}</div></div>
-  <div class="grid grid-cols-3 gap-2 mb-3">
-    <div class="bg-[#12122a]/60 rounded-lg p-2 text-center"><div class="text-[9px] text-gray-500">Sesiones</div><div class="text-base font-bold text-amber-400">${s.count}</div></div>
-    <div class="bg-[#12122a]/60 rounded-lg p-2 text-center"><div class="text-[9px] text-gray-500">Volumen</div><div class="text-base font-bold text-amber-400">${s.vol} min</div></div>
-    <div class="bg-[#12122a]/60 rounded-lg p-2 text-center"><div class="text-[9px] text-gray-500">sRPE</div><div class="text-base font-bold text-amber-400">${s.srpe} UA</div></div>
-  </div><div class="space-y-2">`;
-  daySessions.forEach(sess=>{
-    const t=getTipo(sess.tipo);const sr=srpe(sess);
-    const tags=(sess.tags||[]).map(tg=>`<span class="text-[9px] bg-amber-500/10 text-amber-400/80 px-1.5 py-0.5 rounded-full">${tg}</span>`).join('');
-    body+=`<div class="bg-[#12122a]/60 rounded-xl p-3 border border-gray-800/30">
-      <div class="flex items-center justify-between mb-1.5">
-        <span class="type-badge ${t.badge} border text-[10px]">${t.label}</span>
-        ${tags?'<div class="flex gap-0.5">'+tags+'</div>':''}
-        <div class="flex gap-1">
-          <button onclick="closePanel();openEdit('${sess.id}')" class="p-0.5 hover:text-amber-400 transition text-gray-400"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
-          <button onclick="closePanel();showDeleteConfirm('${sess.id}')" class="p-0.5 hover:text-red-400 transition text-gray-400"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
-        </div>
-      </div>
-      <div class="flex gap-3 text-[11px] text-gray-400 mb-1">
-        <span class="font-mono font-semibold text-gray-300">${sess.volume} min</span>
-        <span class="font-mono text-amber-400/70">RPE ${sess.intensity}/10</span>
-        <span class="font-mono text-emerald-400/70">${sr} UA</span>
-      </div>`;
-    // Exercises
-    if(sess.exercises&&sess.exercises.length){
-      body+=`<div class="mt-2 space-y-1">`;
-      sess.exercises.forEach(ex=>{body+=`<div class="flex gap-2 text-[10px] bg-[#0a0a1a]/60 rounded-lg px-2.5 py-1.5"><span class="font-medium text-gray-200 min-w-[80px]">${ex.name}</span><span class="text-gray-400">${ex.sets}×${ex.reps}</span><span class="text-gray-400">${ex.weight} kg</span></div>`;});
-      body+=`</div>`;
-    }
-    if(sess.notes)body+=`<div class="text-[11px] text-gray-400/80 bg-[#0a0a1a]/60 rounded-lg p-2 mt-1.5 leading-relaxed">${escapeHtml(sess.notes)}</div>`;
-    body+=`</div>`;
-  });
-  body+='</div>';
-  openPanel(`📋 ${d} ${MONTHS[parseInt(m)-1]}`,body);
-}
+function showDayDetail(ds,dd){const f=parseDate(ds),dw=DAYS[f.getDay()],[,m,d]=ds.split('-');const s=getStats(dd);let b=`<div class="mb-3 pb-2 border-b border-[#e5e5ea]"><div class="text-xl font-bold text-[#1c1c1e]">${d} de ${MONTHS[parseInt(m)-1]}</div><div class="text-xs text-[#8e8e93]">${dw}</div></div><div class="grid grid-cols-3 gap-2 mb-3">
+    <div class="ios-inset p-2 text-center"><div class="text-[9px] text-[#8e8e93]">Sesiones</div><div class="text-base font-bold text-[#ff5a1f]">${s.count}</div></div>
+    <div class="ios-inset p-2 text-center"><div class="text-[9px] text-[#8e8e93]">Volumen</div><div class="text-base font-bold text-[#ff5a1f]">${s.vol} min</div></div>
+    <div class="ios-inset p-2 text-center"><div class="text-[9px] text-[#8e8e93]">sRPE</div><div class="text-base font-bold text-[#ff5a1f]">${s.srpe} UA</div></div></div><div class="space-y-2">`;
+  dd.forEach(x=>{const t=getTipo(x.tipo),sr=srpe(x);const tg=(x.tags||[]).map(tg=>`<span class="text-[9px] bg-orange-50 text-[#ff5a1f]/80 px-1.5 py-0.5 rounded-full">${tg}</span>`).join('');
+    b+=`<div class="ios-inset p-3 rounded-xl"><div class="flex items-center justify-between mb-1.5"><span class="type-badge ${t.badge} border text-[10px]">${t.label}</span>${tg?'<div class="flex gap-0.5">'+tg+'</div>':''}<div class="flex gap-1">
+      <button onclick="closePanel();openEdit('${x.id}')" class="p-0.5 hover:text-[#ff5a1f] transition text-[#8e8e93]"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+      <button onclick="closePanel();showDeleteConfirm('${x.id}')" class="p-0.5 hover:text-red-500 transition text-[#8e8e93]"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></div></div>
+      <div class="flex gap-3 text-[11px] text-[#8e8e93] mb-1"><span class="font-mono font-semibold text-[#3a3a3c]">${x.volume} min</span><span class="font-mono text-[#ff9500]">RPE ${x.intensity}/10</span><span class="font-mono text-[#34c759]">${sr} UA</span></div>`;
+    if(x.exercises&&x.exercises.length){b+=`<div class="mt-2 space-y-1">`;x.exercises.forEach(ex=>{b+=`<div class="flex gap-2 text-[10px] bg-white rounded-lg px-2.5 py-1.5 border border-[#e5e5ea]"><span class="font-medium text-[#1c1c1e] min-w-[80px]">${ex.name}</span><span class="text-[#8e8e93]">${ex.sets}×${ex.reps}</span><span class="text-[#8e8e93]">${ex.weight} kg</span></div>`});b+=`</div>`}
+    if(x.notes)b+=`<div class="text-[11px] text-[#8e8e93] bg-white rounded-lg p-2 mt-1.5 leading-relaxed border border-[#e5e5ea]">${escapeHtml(x.notes)}</div>`;b+=`</div>`});
+  b+='</div>';openPanel(`📋 ${d} ${MONTHS[parseInt(m)-1]}`,b)}
 
-// ═══════════════════════════════════════════════
-// FORM — with tags + exercises
-// ═══════════════════════════════════════════════
-function openForm(date){
-  editingId=null;
-  document.getElementById('panelTitle').textContent='📝 Nueva sesión';
-  document.getElementById('panelBody').innerHTML=renderFormHtml(date||todayStr(),null);
-  openPanelDirect();setupFormListeners();
-}
-function openEdit(id){
-  const s=sessions.find(x=>x.id===id);if(!s)return;
-  editingId=id;
-  document.getElementById('panelTitle').textContent='✏️ Editar sesión';
-  document.getElementById('panelBody').innerHTML=renderFormHtml(s.date,s);
-  openPanelDirect();setupFormListeners();
-}
-
-function renderFormHtml(date,session){
-  const s=session||{};
-  const tiposOpts=TIPOS.map(t=>`<option value="${t.id}" ${s.tipo===t.id?'selected':''}>${t.label}</option>`).join('');
-  const tagsVal=(s.tags||[]).join(', ');
-  const exercises=(s.exercises||[]).map((ex,i)=>`
-    <div class="exercise-row flex gap-1.5 items-center" data-idx="${i}">
-      <input type="text" name="ex_name" value="${ex.name}" placeholder="Ejercicio" class="flex-1 bg-[#0a0a1a]/60 border border-gray-700/50 rounded-lg px-2 py-1.5 text-xs text-gray-100 focus:outline-none" />
-      <input type="number" name="ex_sets" value="${ex.sets}" placeholder="S" class="w-10 bg-[#0a0a1a]/60 border border-gray-700/50 rounded-lg px-1.5 py-1.5 text-xs text-gray-100 text-center focus:outline-none" />
-      <input type="number" name="ex_reps" value="${ex.reps}" placeholder="R" class="w-10 bg-[#0a0a1a]/60 border border-gray-700/50 rounded-lg px-1.5 py-1.5 text-xs text-gray-100 text-center focus:outline-none" />
-      <input type="number" name="ex_weight" value="${ex.weight}" placeholder="kg" class="w-12 bg-[#0a0a1a]/60 border border-gray-700/50 rounded-lg px-1.5 py-1.5 text-xs text-gray-100 text-center focus:outline-none" />
-      <button type="button" onclick="this.closest('.exercise-row').remove()" class="p-1 text-gray-500 hover:text-red-400 transition"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
-    </div>`).join('');
-
+// FORM
+function openForm(date){editingId=null;document.getElementById('panelTitle').textContent='📝 Nueva sesión';document.getElementById('panelBody').innerHTML=renderFormHtml(date||todayStr(),null);openPanelDirect();setupFormListeners()}
+function openEdit(id){const s=sessions.find(x=>x.id===id);if(!s)return;editingId=id;document.getElementById('panelTitle').textContent='✏️ Editar sesión';document.getElementById('panelBody').innerHTML=renderFormHtml(s.date,s);openPanelDirect();setupFormListeners()}
+function renderFormHtml(date,session){const s=session||{};const to=TIPOS.map(t=>`<option value="${t.id}" ${s.tipo===t.id?'selected':''}>${t.label}</option>`).join('');const tv=(s.tags||[]).join(', ');
+  const ex=(s.exercises||[]).map((ex,i)=>`<div class="exercise-row flex gap-1.5 items-center" data-idx="${i}"><input type="text" name="ex_name" value="${ex.name}" placeholder="Ejercicio" class="flex-1 ios-input py-1.5 text-xs" /><input type="number" name="ex_sets" value="${ex.sets}" placeholder="S" class="w-10 ios-input py-1.5 text-xs text-center" /><input type="number" name="ex_reps" value="${ex.reps}" placeholder="R" class="w-10 ios-input py-1.5 text-xs text-center" /><input type="number" name="ex_weight" value="${ex.weight}" placeholder="kg" class="w-12 ios-input py-1.5 text-xs text-center" /><button type="button" onclick="this.closest(\'.exercise-row\').remove()" class="p-1 text-[#8e8e93] hover:text-red-500 transition"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button></div>`).join('');
   return `<form id="sessionForm" class="space-y-3">
-    <div><label class="block text-[10px] font-medium text-gray-400 mb-0.5">Fecha</label><input type="date" name="date" value="${s.date||date}" class="w-full bg-[#0a0a1a]/80 border border-gray-700/50 rounded-xl px-3 py-2 text-sm text-gray-100 focus:outline-none" required /></div>
-    <div><label class="block text-[10px] font-medium text-gray-400 mb-0.5">Tipo de sesión</label><select name="tipo" id="formTipo" class="w-full bg-[#0a0a1a]/80 border border-gray-700/50 rounded-xl px-3 py-2 text-sm text-gray-100 focus:outline-none">${tiposOpts}</select></div>
+    <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">Fecha</label><input type="date" name="date" value="${s.date||date}" class="ios-input w-full" required /></div>
+    <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">Tipo de sesión</label><select name="tipo" id="formTipo" class="ios-input ios-select w-full">${to}</select></div>
     <div class="grid grid-cols-2 gap-2">
-      <div><label class="block text-[10px] font-medium text-gray-400 mb-0.5">Volumen (min)</label><input type="number" name="volume" value="${s.volume||''}" min="1" max="600" placeholder="45" class="w-full bg-[#0a0a1a]/80 border border-gray-700/50 rounded-xl px-3 py-2 text-sm text-gray-100 focus:outline-none" required /></div>
-      <div><label class="block text-[10px] font-medium text-gray-400 mb-0.5">Intensidad RPE</label>
-        <div class="flex items-center gap-2"><span class="text-[10px] text-gray-600">1</span><input type="range" name="intensity" min="1" max="10" value="${s.intensity||'5'}" class="w-full accent-amber-500 h-1" oninput="document.getElementById('rpeVal').textContent=this.value+'/10'" /><span class="text-[10px] text-gray-600">10</span></div>
-        <div class="text-center mt-0.5"><span id="rpeVal" class="text-base font-bold font-mono text-amber-400">${s.intensity||'5'}/10</span></div>
+      <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">Volumen (min)</label><input type="number" name="volume" value="${s.volume||''}" min="1" max="600" placeholder="45" class="ios-input w-full" required /></div>
+      <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">Intensidad RPE</label>
+        <div class="flex items-center gap-2 pt-1"><span class="text-[10px] text-[#aeaeb2]">1</span><input type="range" name="intensity" min="1" max="10" value="${s.intensity||'5'}" class="ios-slider flex-1" oninput="document.getElementById('rpeVal').textContent=this.value" /><span class="text-[10px] text-[#aeaeb2]">10</span></div>
+        <div class="text-center mt-0.5"><span id="rpeVal" class="text-base font-bold font-mono text-[#ff5a1f]">${s.intensity||'5'}</span><span class="text-[10px] text-[#aeaeb2]">/10</span></div>
       </div>
     </div>
-    <div><label class="block text-[10px] font-medium text-gray-400 mb-0.5">Tags <span class="text-gray-600">(separados por coma)</span></label><input type="text" name="tags" value="${escapeHtml(tagsVal)}" placeholder="#recuperación, #técnica-nueva" class="w-full bg-[#0a0a1a]/80 border border-gray-700/50 rounded-xl px-3 py-2 text-sm text-gray-100 focus:outline-none" /></div>
-    <div><label class="block text-[10px] font-medium text-gray-400 mb-0.5">Sensaciones / Notas</label><textarea name="notes" rows="2" placeholder="Fatiga, dolores, ánimo…" class="w-full bg-[#0a0a1a]/80 border border-gray-700/50 rounded-xl px-3 py-2 text-sm text-gray-100 focus:outline-none resize-none">${escapeHtml(s.notes||'')}</textarea></div>
+    <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">Tags <span class="text-[#aeaeb2]">(separados por coma)</span></label><input type="text" name="tags" value="${escapeHtml(tv)}" placeholder="#recuperación, #técnica-nueva" class="ios-input w-full" /></div>
+    <div><label class="block text-[10px] font-medium text-[#8e8e93] mb-0.5">Sensaciones / Notas</label><textarea name="notes" rows="2" placeholder="Fatiga, dolores, ánimo…" class="ios-input w-full resize-none">${escapeHtml(s.notes||'')}</textarea></div>
+    <div id="exercisesSection" class="${(s.tipo||'fuerza')==='fuerza'?'':'hidden'}"><div class="flex items-center justify-between mb-1"><label class="text-[10px] font-medium text-[#8e8e93]">Ejercicios</label><button type="button" onclick="addExerciseRow()" class="text-[10px] bg-[#f2f2f7] hover:bg-[#e5e5ea] text-[#3a3a3c] px-2 py-1 rounded-lg transition font-medium">+ Añadir</button></div><div id="exerciseRows" class="space-y-1.5">${ex||''}</div></div>
+    <div class="flex gap-2 pt-1"><button type="submit" class="btn-ios-primary flex-1 text-sm">${session?'Guardar cambios':'Registrar sesión'}</button><button type="button" onclick="closePanel()" class="btn-ios-secondary text-sm">Cancelar</button></div></form>`}
+function addExerciseRow(){const c=document.getElementById('exerciseRows'),d=document.createElement('div');d.className='exercise-row flex gap-1.5 items-center';d.innerHTML='<input type="text" name="ex_name" placeholder="Ejercicio" class="flex-1 ios-input py-1.5 text-xs" /><input type="number" name="ex_sets" placeholder="S" class="w-10 ios-input py-1.5 text-xs text-center" /><input type="number" name="ex_reps" placeholder="R" class="w-10 ios-input py-1.5 text-xs text-center" /><input type="number" name="ex_weight" placeholder="kg" class="w-12 ios-input py-1.5 text-xs text-center" /><button type="button" onclick="this.closest(\'.exercise-row\').remove()" class="p-1 text-[#8e8e93] hover:text-red-500 transition"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>';c.appendChild(d);d.scrollIntoView({behavior:'smooth',block:'nearest'})}
+function setupFormListeners(){const f=document.getElementById('sessionForm');if(!f)return;const ts=document.getElementById('formTipo');if(ts)ts.addEventListener('change',()=>{document.getElementById('exercisesSection').classList.toggle('hidden',ts.value!=='fuerza')});f.addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(f);const d={date:fd.get('date'),tipo:fd.get('tipo'),volume:fd.get('volume'),intensity:fd.get('intensity'),notes:fd.get('notes')||'',tags:(fd.get('tags')||'').split(',').map(t=>t.trim()).filter(Boolean),exercises:[]};if(!d.date||!d.volume)return;document.querySelectorAll('#exerciseRows .exercise-row').forEach(r=>{const inp=r.querySelectorAll('input');if(inp.length>=4&&inp[0].value.trim())d.exercises.push({name:inp[0].value.trim(),sets:parseInt(inp[1].value)||0,reps:parseInt(inp[2].value)||0,weight:parseFloat(inp[3].value)||0})});if(editingId){const idx=sessions.findIndex(s=>s.id===editingId);if(idx!==-1){sessions[idx]={...sessions[idx],...d,id:editingId}}editingId=null}else{const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);sessions.push({...d,id})}saveSessions();closePanel();renderCalendar();renderDashboard()})}
 
-    <!-- Exercises (visible only for Fuerza) -->
-    <div id="exercisesSection" class="${(s.tipo||'fuerza')==='fuerza'?'':'hidden'}">
-      <div class="flex items-center justify-between mb-1">
-        <label class="text-[10px] font-medium text-gray-400">Ejercicios</label>
-        <button type="button" onclick="addExerciseRow()" class="text-[10px] bg-gray-800/60 hover:bg-gray-700/60 text-gray-300 px-2 py-1 rounded-lg transition">+ Añadir ejercicio</button>
-      </div>
-      <div id="exerciseRows" class="space-y-1.5">${exercises||''}</div>
-    </div>
-
-    <div class="flex gap-2 pt-1">
-      <button type="submit" class="flex-1 bg-amber-500 hover:bg-amber-400 text-black font-bold py-2 rounded-xl transition text-sm shadow-lg shadow-amber-500/20">${session?'Guardar cambios':'Registrar sesión'}</button>
-      <button type="button" onclick="closePanel()" class="px-4 py-2 bg-gray-800/80 hover:bg-gray-700/80 text-gray-300 rounded-xl transition text-sm">Cancelar</button>
-    </div>
-  </form>`;
-}
-
-function addExerciseRow(){
-  const container=document.getElementById('exerciseRows');
-  const div=document.createElement('div');div.className='exercise-row flex gap-1.5 items-center';
-  div.innerHTML=`<input type="text" name="ex_name" placeholder="Ejercicio" class="flex-1 bg-[#0a0a1a]/60 border border-gray-700/50 rounded-lg px-2 py-1.5 text-xs text-gray-100 focus:outline-none" />
-<input type="number" name="ex_sets" placeholder="S" class="w-10 bg-[#0a0a1a]/60 border border-gray-700/50 rounded-lg px-1.5 py-1.5 text-xs text-gray-100 text-center focus:outline-none" />
-<input type="number" name="ex_reps" placeholder="R" class="w-10 bg-[#0a0a1a]/60 border border-gray-700/50 rounded-lg px-1.5 py-1.5 text-xs text-gray-100 text-center focus:outline-none" />
-<input type="number" name="ex_weight" placeholder="kg" class="w-12 bg-[#0a0a1a]/60 border border-gray-700/50 rounded-lg px-1.5 py-1.5 text-xs text-gray-100 text-center focus:outline-none" />
-<button type="button" onclick="this.closest('.exercise-row').remove()" class="p-1 text-gray-500 hover:text-red-400 transition"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>`;
-  container.appendChild(div);div.scrollIntoView({behavior:'smooth',block:'nearest'});
-}
-
-function setupFormListeners(){
-  const form=document.getElementById('sessionForm');if(!form)return;
-  // Toggle exercises section on tipo change
-  const tipoSel=document.getElementById('formTipo');
-  if(tipoSel)tipoSel.addEventListener('change',()=>{
-    document.getElementById('exercisesSection').classList.toggle('hidden',tipoSel.value!=='fuerza');
-  });
-  form.addEventListener('submit',(e)=>{
-    e.preventDefault();const fd=new FormData(form);
-    const data={date:fd.get('date'),tipo:fd.get('tipo'),volume:fd.get('volume'),intensity:fd.get('intensity'),notes:fd.get('notes')||'',tags:(fd.get('tags')||'').split(',').map(t=>t.trim()).filter(Boolean),exercises:[]};
-    if(!data.date||!data.volume)return;
-    // Collect exercises
-    const exRows=document.querySelectorAll('#exerciseRows .exercise-row');
-    exRows.forEach(row=>{
-      const inputs=row.querySelectorAll('input');
-      if(inputs.length>=4&&inputs[0].value.trim()){
-        data.exercises.push({name:inputs[0].value.trim(),sets:parseInt(inputs[1].value)||0,reps:parseInt(inputs[2].value)||0,weight:parseFloat(inputs[3].value)||0});
-      }
-    });
-    if(editingId){const idx=sessions.findIndex(s=>s.id===editingId);if(idx!==-1){sessions[idx]={...sessions[idx],...data,id:editingId};}editingId=null;}
-    else{const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);sessions.push({...data,id});}
-    saveSessions();closePanel();renderCalendar();renderDashboard();
-  });
-}
-
-// ═══════════════════════════════════════════════
 // DELETE
-// ═══════════════════════════════════════════════
-function showDeleteConfirm(id){pendingDeleteId=id;document.getElementById('confirmOverlay').classList.remove('hidden');}
-function closeConfirm(){document.getElementById('confirmOverlay').classList.add('hidden');pendingDeleteId=null;}
-function executeDelete(){
-  if(!pendingDeleteId)return;
-  const deleted=sessions.find(s=>s.id===pendingDeleteId);
-  sessions=sessions.filter(s=>s.id!==pendingDeleteId);saveSessions();pendingDeleteId=null;closeConfirm();
-  renderCalendar();renderDashboard();closePanel();
-  // Remove deleted session's tags from memory when cleaning up (simple)
-}
+function showDeleteConfirm(id){pendingDeleteId=id;document.getElementById('confirmOverlay').classList.remove('hidden')}
+function closeConfirm(){document.getElementById('confirmOverlay').classList.add('hidden');pendingDeleteId=null}
+function executeDelete(){if(!pendingDeleteId)return;sessions=sessions.filter(s=>s.id!==pendingDeleteId);saveSessions();pendingDeleteId=null;closeConfirm();renderCalendar();renderDashboard();closePanel()}
 
-// ═══════════════════════════════════════════════
 // MEASUREMENTS
-// ═══════════════════════════════════════════════
-function renderMeasurements(){
-  const list=document.getElementById('measurementsList'),empty=document.getElementById('emptyMeasurements');
-  if(!measurements.length){list.innerHTML='';empty.classList.remove('hidden');return;}
-  empty.classList.add('hidden');
-  const sorted=[...measurements].sort((a,b)=>b.date.localeCompare(a.date));
-  list.innerHTML=sorted.map(m=>{
-    const[mth,day]=m.date.split('-').slice(1);
-    return `<div class="flex items-center gap-3 bg-[#12122a]/60 rounded-xl px-3 py-2 border border-gray-800/30 fade-in">
-      <div class="text-center min-w-[2rem]"><div class="text-xs font-bold text-gray-300">${day}/${mth}</div></div>
-      <div class="flex gap-3 text-xs"><span class="font-mono text-amber-400/80">${m.weight} kg</span>${m.bodyFat?`<span class="font-mono text-gray-400">${m.bodyFat}% grasa</span>`:''}${m.waist?`<span class="font-mono text-gray-400">${m.waist} cm</span>`:''}</div>
-      <button onclick="deleteMeasurement('${m.id}')" class="ml-auto p-0.5 hover:text-red-400 transition text-gray-500"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
-    </div>`;
-  }).join('');
-  renderMeasurementsChart();
-}
+function renderMeasurements(){const l=document.getElementById('measurementsList'),e=document.getElementById('emptyMeasurements');if(!measurements.length){l.innerHTML='';e.classList.remove('hidden');return}e.classList.add('hidden');const s=[...measurements].sort((a,b)=>b.date.localeCompare(a.date));l.innerHTML=s.map(m=>{const[,mm,dd]=m.date.split('-');return`<div class="flex items-center gap-3 bg-white rounded-xl px-3 py-2 border border-[#e5e5ea] fade-in"><div class="text-center min-w-[2rem]"><div class="text-xs font-bold text-[#1c1c1e]">${dd}/${mm}</div></div><div class="flex gap-3 text-xs"><span class="font-mono text-[#ff5a1f]">${m.weight} kg</span>${m.bodyFat?`<span class="font-mono text-[#8e8e93]">${m.bodyFat}% grasa</span>`:''}${m.waist?`<span class="font-mono text-[#8e8e93]">${m.waist} cm</span>`:''}</div><button onclick="deleteMeasurement('${m.id}')" class="ml-auto p-0.5 hover:text-red-500 transition text-[#aeaeb2]"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></div>`}).join('');renderMeasurementsChart()}
+function renderMeasurementsChart(){const c=document.getElementById('measurementsChart');if(!c)return;const s=[...measurements].sort((a,b)=>a.date.localeCompare(b.date));if(measChartInstance){measChartInstance.destroy()}if(s.length<2)return;measChartInstance=new Chart(c.getContext('2d'),{type:'line',data:{labels:s.map(m=>{const[,mm,dd]=m.date.split('-');return dd+'/'+mm}),datasets:[{label:'Peso (kg)',data:s.map(m=>parseFloat(m.weight)),borderColor:'#ff5a1f',backgroundColor:'rgba(255,107,53,0.08)',borderWidth:2,pointBackgroundColor:'#ff5a1f',pointRadius:3,tension:0.3,fill:true}]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:2.5,plugins:{legend:{labels:{color:'#8e8e93',font:{size:9},boxWidth:10,boxHeight:7,padding:6},position:'bottom'},tooltip:{backgroundColor:'#ffffff',titleColor:'#1c1c1e',bodyColor:'#3a3a3c',borderColor:'#e5e5ea',borderWidth:1,padding:6,bodyFont:{size:9}}},scales:{x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#aeaeb2',font:{size:8}}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#aeaeb2',font:{size:8}}}}}})}
+function deleteMeasurement(id){if(!confirm('¿Eliminar esta medición?'))return;measurements=measurements.filter(m=>m.id!==id);saveMeasurements();renderMeasurements()}
+function openMeasForm(){document.getElementById('measOverlay').classList.remove('hidden');document.getElementById('measForm').mdate.value=todayStr()}
+function closeMeasForm(){document.getElementById('measOverlay').classList.add('hidden')}
 
-function renderMeasurementsChart(){
-  const canvas=document.getElementById('measurementsChart');if(!canvas)return;
-  const sorted=[...measurements].sort((a,b)=>a.date.localeCompare(b.date));
-  if(sorted.length<2&&!sorted.length)return;
-  const labels=sorted.map(m=>{const[,mm,dd]=m.date.split('-');return dd+'/'+mm;});
-  const weights=sorted.map(m=>parseFloat(m.weight));
-  if(measChartInstance){measChartInstance.destroy();measChartInstance=null;}
-  if(sorted.length<2)return;
-  measChartInstance=new Chart(canvas.getContext('2d'),{
-    type:'line',
-    data:{labels,datasets:[
-      {label:'Peso (kg)',data:weights,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.1)',borderWidth:2,pointBackgroundColor:'#f59e0b',pointRadius:3,tension:0.3,fill:true}
-    ]},
-    options:{responsive:true,maintainAspectRatio:true,aspectRatio:2.5,
-      plugins:{legend:{labels:{color:'#9ca3af',font:{size:9},boxWidth:10,boxHeight:7,padding:6},position:'bottom'},
-        tooltip:{backgroundColor:'#1c1c36',titleColor:'#e5e7eb',bodyColor:'#d1d5db',borderColor:'#374151',borderWidth:1,padding:6,bodyFont:{size:9}}},
-      scales:{x:{grid:{color:'rgba(75,85,99,0.12)'},ticks:{color:'#6b7280',font:{size:8}}},
-        y:{grid:{color:'rgba(75,85,99,0.12)'},ticks:{color:'#6b7280',font:{size:8}}}}}
-  });
-}
-
-function deleteMeasurement(id){
-  if(!confirm('¿Eliminar esta medición?'))return;
-  measurements=measurements.filter(m=>m.id!==id);saveMeasurements();renderMeasurements();
-}
-
-function openMeasForm(){
-  document.getElementById('measOverlay').classList.remove('hidden');
-  document.getElementById('measForm').mdate.value=todayStr();
-}
-function closeMeasForm(){document.getElementById('measOverlay').classList.add('hidden');}
-
-// ═══════════════════════════════════════════════
 // DASHBOARD
-// ═══════════════════════════════════════════════
-function renderDashboard(){
-  const today=new Date();today.setHours(23,59,59,0);
-  const weekAgo=new Date(today);weekAgo.setDate(weekAgo.getDate()-7);
+function renderDashboard(){const t=new Date();t.setHours(23,59,59,0);const wa=new Date(t);wa.setDate(wa.getDate()-7);let ws=0,wv=0;sessions.forEach(s=>{const sd=parseDate(s.date);if(sd>=wa&&sd<=t){ws++;wv+=parseInt(s.volume)||0}});document.getElementById('dashWeeklySessions').textContent=ws+' sesiones';document.getElementById('dashWeeklyVolume').textContent=wv+' min';document.getElementById('dashGoalValue').textContent=weeklyGoal+' min';const p=Math.min(Math.round((wv/weeklyGoal)*100),100);document.getElementById('dashGoalPercent').textContent=p+'%';document.getElementById('dashGoalBar').style.width=p+'%';const sorted=[...sessions].sort((a,b)=>b.date.localeCompare(a.date));let lastDay=null;if(sorted.length){const ud=[...new Set(sorted.map(s=>s.date))].sort((a,b)=>b.localeCompare(a));lastDay=ud[0]}if(lastDay){const diff=Math.round((t-parseDate(lastDay))/(864e5));document.getElementById('dashRestDays').textContent=diff+' día'+(diff!==1?'s':'');document.getElementById('dashRestLabel').textContent='sin entrenar'}else{document.getElementById('dashRestDays').textContent='—';document.getElementById('dashRestLabel').textContent='sin datos'}const tv=sessions.reduce((a,s)=>a+(parseInt(s.volume)||0),0);document.getElementById('dashTotalVolume').textContent=tv+' min';document.getElementById('dashTotalSessions').textContent=sessions.length+' sesiones';const bt={};sessions.forEach(s=>{if(!bt[s.tipo])bt[s.tipo]=[];bt[s.tipo].push(s)});const el=document.getElementById('dashTypeBreakdown'),keys=Object.keys(bt).sort((a,b)=>bt[b].length-bt[a].length),mc=keys.length?bt[keys[0]].length:1;el.innerHTML=keys.map(k=>{const t=getTipo(k),ss=bt[k],s=getStats(ss),pw=Math.round((ss.length/mc)*100);return`<div class="flex items-center gap-2 text-xs"><span class="type-badge ${t.badge} border min-w-[60px]">${t.label}</span><div class="flex-1 h-2 bg-[#f2f2f7] rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:${pw}%;background:${t.color}"></div></div><span class="font-mono text-[#3a3a3c] w-8 text-right">${ss.length}</span><span class="font-mono text-[#8e8e93] w-14 text-right">${s.vol} min</span></div>`}).join('')}
 
-  let ws=0,wv=0;
-  sessions.forEach(s=>{const sd=parseDate(s.date);if(sd>=weekAgo&&sd<=today){ws++;wv+=parseInt(s.volume)||0;}});
-  document.getElementById('dashWeeklySessions').textContent=ws+' sesiones';
-  document.getElementById('dashWeeklyVolume').textContent=wv+' min';
-  document.getElementById('dashGoalValue').textContent=weeklyGoal+' min';
-  const pct=Math.min(Math.round((wv/weeklyGoal)*100),100);
-  document.getElementById('dashGoalPercent').textContent=pct+'%';
-  document.getElementById('dashGoalBar').style.width=pct+'%';
+// CSV
+function exportCsv(){if(!sessions.length){alert('No hay sesiones.');return}const r=[['Fecha','Tipo','Vol(min)','RPE','sRPE(UA)','Tags','Notas']];sessions.sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>{const t=getTipo(s.tipo);r.push([s.date,t.label,s.volume,s.intensity,srpe(s),(s.tags||[]).join(';'),'"'+(s.notes||'').replace(/"/g,'""')+'"'])});const csv=r.map(r=>r.join(',')).join('\n');const b=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='entrenamiento-historial.csv';a.click();URL.revokeObjectURL(a.href)}
 
-  // Rest days
-  const sorted=[...sessions].sort((a,b)=>b.date.localeCompare(a.date));
-  let lastDay=null;
-  if(sorted.length){
-    const ud=[...new Set(sorted.map(s=>s.date))].sort((a,b)=>b.localeCompare(a));
-    lastDay=ud[0];
-  }
-  if(lastDay){
-    const diff=Math.round((today-parseDate(lastDay))/(864e5));
-    document.getElementById('dashRestDays').textContent=diff+' día'+(diff!==1?'s':'');
-    document.getElementById('dashRestLabel').textContent='sin entrenar';
-  }else{
-    document.getElementById('dashRestDays').textContent='—';
-    document.getElementById('dashRestLabel').textContent='sin datos';
-  }
+// PDF
+function exportPdf(){const ms=sessionsForMonth(currentYear,currentMonth).sort((a,b)=>a.date.localeCompare(b.date));if(!ms.length){alert('No hay sesiones este mes.');return}const{jsPDF}=window.jspdf;const doc=new jsPDF('p','mm','a4');doc.setFillColor(242,242,247);doc.rect(0,0,210,297,'F');doc.setFont('helvetica','bold');doc.setFontSize(20);doc.setTextColor(255,90,31);doc.text('Diario de Entrenamiento',105,22,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(12);doc.setTextColor(62,62,66);doc.text(MONTHS[currentMonth]+' '+currentYear,105,31,{align:'center'});const s=getStats(ms);doc.setFontSize(8);doc.setTextColor(142,142,147);doc.text('Sesiones: '+s.count+'  •  Vol: '+s.vol+' min  •  RPE: '+s.avgInt+'  •  sRPE: '+s.srpe+' UA',105,39,{align:'center'});doc.autoTable({head:[['Fecha','Tipo','Vol','RPE','sRPE','Notas']],body:ms.map(s=>{const t=getTipo(s.tipo);const[y,m,d]=s.date.split('-');return[`${d}/${m}`,t.label,`${s.volume}min`,s.intensity+'/10',srpe(s)+'UA',s.notes||'—']}),startY:44,theme:'grid',styles:{font:'helvetica',fontSize:7,textColor:[28,28,30],fillColor:[255,255,255],lineColor:[229,229,234],lineWidth:0.2,cellPadding:{top:2,right:2,bottom:2,left:2}},headStyles:{fillColor:[255,90,31],textColor:[255,255,255],fontStyle:'bold',fontSize:7},alternateRowStyles:{fillColor:[242,242,247]},columnStyles:{0:{cellWidth:16},1:{cellWidth:35},2:{cellWidth:14,halign:'center'},3:{cellWidth:12,halign:'center'},4:{cellWidth:16,halign:'center'},5:{cellWidth:'auto'}},margin:{top:44,right:12,left:12}});const pc=doc.internal.getNumberOfPages();for(let i=1;i<=pc;i++){doc.setPage(i);doc.setFontSize(6);doc.setTextColor(174,174,178);doc.text('diario-entrenamiento — '+new Date().toLocaleDateString('es-ES'),105,290,{align:'center'})}doc.save('entrenamiento-'+MONTHS[currentMonth].toLowerCase()+'-'+currentYear+'.pdf')}
+function exportAllPdf(){if(!sessions.length){alert('No hay sesiones.');return}const{jsPDF}=window.jspdf;const doc=new jsPDF('p','mm','a4');doc.setFillColor(242,242,247);doc.rect(0,0,210,297,'F');doc.setFont('helvetica','bold');doc.setFontSize(20);doc.setTextColor(255,90,31);doc.text('Diario de Entrenamiento',105,18,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(142,142,147);doc.text('Historial completo',105,26,{align:'center'});const st=getStats(sessions);doc.setFontSize(8);doc.setTextColor(142,142,147);doc.text('Total: '+st.count+' ses  •  '+st.vol+' min  •  sRPE: '+st.srpe+' UA  •  RPE media: '+st.avgInt,105,33,{align:'center'});let y=38;doc.setFontSize(7);doc.setTextColor(255,90,31);doc.setFont('helvetica','bold');doc.text('Resumen por tipo:',14,y);y+=4;doc.setFont('helvetica','normal');doc.setTextColor(62,62,66);const bt={};sessions.forEach(s=>{if(!bt[s.tipo])bt[s.tipo]=[];bt[s.tipo].push(s)});Object.keys(bt).sort().forEach(k=>{const t=getTipo(k),ss=bt[k],s=getStats(ss);doc.text('• '+t.label+': '+s.count+' ses, '+s.vol+' min, RPE '+s.avgInt+', '+s.srpe+' UA',16,y);y+=4});y=Math.max(y+3,38+Object.keys(bt).length*4+8);const sorted=[...sessions].sort((a,b)=>a.date.localeCompare(b.date));doc.autoTable({head:[['Fecha','Tipo','Vol','RPE','sRPE','Notas']],body:sorted.map(s=>{const t=getTipo(s.tipo);const[y,m,d]=s.date.split('-');const f=parseDate(s.date);return[`${d}/${m} ${DAYS[f.getDay()]}`,t.label,`${s.volume}min`,s.intensity+'/10',srpe(s)+'UA',s.notes||'—']}),startY:y,theme:'grid',styles:{font:'helvetica',fontSize:6.5,textColor:[28,28,30],fillColor:[255,255,255],lineColor:[229,229,234],lineWidth:0.2,cellPadding:{top:2,right:2,bottom:2,left:2}},headStyles:{fillColor:[255,90,31],textColor:[255,255,255],fontStyle:'bold',fontSize:6.5},alternateRowStyles:{fillColor:[242,242,247]},columnStyles:{0:{cellWidth:18},1:{cellWidth:30},2:{cellWidth:13,halign:'center'},3:{cellWidth:11,halign:'center'},4:{cellWidth:15,halign:'center'},5:{cellWidth:'auto'}},margin:{top:y,right:12,left:12}});const pc=doc.internal.getNumberOfPages();for(let i=1;i<=pc;i++){doc.setPage(i);doc.setFontSize(6);doc.setTextColor(174,174,178);doc.text('diario-entrenamiento — '+new Date().toLocaleDateString('es-ES'),105,290,{align:'center'})}doc.save('entrenamiento-historial-completo.pdf')}
 
-  const totalVol=sessions.reduce((a,s)=>a+(parseInt(s.volume)||0),0);
-  document.getElementById('dashTotalVolume').textContent=totalVol+' min';
-  document.getElementById('dashTotalSessions').textContent=sessions.length+' sesiones';
+// NAV
+function prevMonth(){currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--}renderCalendar()}
+function nextMonth(){currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++}renderCalendar()}
+function switchTab(t){['diarySection','measurementsSection','dashboardSection'].forEach(id=>document.getElementById(id).classList.add('hidden'));['navTabDiary','navTabMeasurements','navTabDashboard'].forEach(id=>document.getElementById(id).classList.remove('active','text-[#ff5a1f]','font-semibold'));document.getElementById(t+'Section').classList.remove('hidden');document.getElementById('navTab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.add('active','text-[#ff5a1f]','font-semibold');if(t==='measurements')renderMeasurements();if(t==='dashboard')renderDashboard();window.dispatchEvent(new Event('resize'))}
 
-  // Type breakdown
-  const byType={};
-  sessions.forEach(s=>{if(!byType[s.tipo])byType[s.tipo]=[];byType[s.tipo].push(s);});
-  const el=document.getElementById('dashTypeBreakdown');
-  const keys=Object.keys(byType).sort((a,b)=>byType[b].length-byType[a].length);
-  const maxCount=keys.length?byType[keys[0]].length:1;
-  el.innerHTML=keys.map(k=>{
-    const t=getTipo(k),ss=byType[k],s=getStats(ss);
-    const pctW=Math.round((ss.length/maxCount)*100);
-    return `<div class="flex items-center gap-2 text-xs">
-      <span class="type-badge ${t.badge} border min-w-[60px]">${t.label}</span>
-      <div class="flex-1 h-2 bg-gray-800/60 rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:${pctW}%;background:${t.color}"></div></div>
-      <span class="font-mono text-gray-300 w-8 text-right">${ss.length}</span>
-      <span class="font-mono text-gray-500 w-14 text-right">${s.vol} min</span>
-    </div>`;
-  }).join('');
-}
+function setupGoal(){const b=document.getElementById('dashGoalValue');b.style.cursor='pointer';b.title='Click para cambiar objetivo';b.addEventListener('click',()=>{const v=prompt('Objetivo semanal (minutos):',weeklyGoal);if(v&&!isNaN(v)&&parseInt(v)>0){saveGoal(parseInt(v));renderDashboard()}})}
 
-// ═══════════════════════════════════════════════
-// CSV EXPORT
-// ═══════════════════════════════════════════════
-function exportCsv(){
-  if(!sessions.length){alert('No hay sesiones para exportar.');return;}
-  const rows=[['Fecha','Tipo','Volumen(min)','RPE','sRPE(UA)','Tags','Notas']];
-  sessions.sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>{
-    const t=getTipo(s.tipo);const tags=(s.tags||[]).join(';');
-    rows.push([s.date,t.label,s.volume,s.intensity,srpe(s),tags,'"'+ (s.notes||'').replace(/"/g,'""') +'"']);
-  });
-  const csv=rows.map(r=>r.join(',')).join('\n');
-  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='entrenamiento-historial.csv';a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-// ═══════════════════════════════════════════════
-// PDF EXPORTS (updated with sRPE)
-// ═══════════════════════════════════════════════
-function exportPdf(){
-  const ms=sessionsForMonth(currentYear,currentMonth).sort((a,b)=>a.date.localeCompare(b.date));
-  if(!ms.length){alert('No hay sesiones este mes.');return;}
-  const{jsPDF}=window.jspdf;const doc=new jsPDF('p','mm','a4');
-  doc.setFillColor(15,15,26);doc.rect(0,0,210,297,'F');
-  doc.setFont('helvetica','bold');doc.setFontSize(20);doc.setTextColor(245,158,11);
-  doc.text('Diario de Entrenamiento',105,22,{align:'center'});
-  doc.setFont('helvetica','normal');doc.setFontSize(12);doc.setTextColor(156,163,175);
-  doc.text(MONTHS[currentMonth]+' '+currentYear,105,31,{align:'center'});
-  const s=getStats(ms);
-  doc.setFontSize(8);doc.setTextColor(209,213,219);
-  doc.text(`Sesiones: ${s.count}  •  Vol: ${s.vol} min  •  RPE: ${s.avgInt}  •  sRPE: ${s.srpe} UA`,105,39,{align:'center'});
-  doc.autoTable({
-    head:[['Fecha','Tipo','Vol','RPE','sRPE','Notas']],
-    body:ms.map(s=>{const t=getTipo(s.tipo);const[y,m,d]=s.date.split('-');return[`${d}/${m}`,t.label,`${s.volume}min`,s.intensity+'/10',srpe(s)+'UA',s.notes||'—'];}),
-    startY:44,theme:'grid',
-    styles:{font:'helvetica',fontSize:7,textColor:[209,213,219],fillColor:[22,22,42],lineColor:[55,55,75],lineWidth:0.2,cellPadding:{top:2,right:2,bottom:2,left:2}},
-    headStyles:{fillColor:[245,158,11],textColor:[0,0,0],fontStyle:'bold',fontSize:7},
-    alternateRowStyles:{fillColor:[26,26,46]},
-    columnStyles:{0:{cellWidth:16},1:{cellWidth:35},2:{cellWidth:14,halign:'center'},3:{cellWidth:12,halign:'center'},4:{cellWidth:16,halign:'center'},5:{cellWidth:'auto'}},
-    margin:{top:44,right:12,left:12},
-  });
-  const pc=doc.internal.getNumberOfPages();
-  for(let i=1;i<=pc;i++){doc.setPage(i);doc.setFontSize(6);doc.setTextColor(75,85,99);doc.text('diario-entrenamiento — '+new Date().toLocaleDateString('es-ES'),105,290,{align:'center'});}
-  doc.save(`entrenamiento-${MONTHS[currentMonth].toLowerCase()}-${currentYear}.pdf`);
-}
-
-function exportAllPdf(){
-  if(!sessions.length){alert('No hay sesiones.');return;}
-  const{jsPDF}=window.jspdf;const doc=new jsPDF('p','mm','a4');
-  doc.setFillColor(15,15,26);doc.rect(0,0,210,297,'F');
-  doc.setFont('helvetica','bold');doc.setFontSize(20);doc.setTextColor(245,158,11);
-  doc.text('Diario de Entrenamiento',105,18,{align:'center'});
-  doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(156,163,175);
-  doc.text('Historial completo',105,26,{align:'center'});
-  const stats=getStats(sessions);
-  doc.setFontSize(8);doc.setTextColor(209,213,219);
-  doc.text(`Total: ${stats.count} sesiones  •  ${stats.vol} min  •  sRPE: ${stats.srpe} UA  •  RPE media: ${stats.avgInt}`,105,33,{align:'center'});
-  // By type
-  let y=38;doc.setFontSize(7);doc.setTextColor(245,158,11);doc.setFont('helvetica','bold');doc.text('Resumen por tipo:',14,y);y+=4;doc.setFont('helvetica','normal');doc.setTextColor(209,213,219);
-  const bt={};sessions.forEach(s=>{if(!bt[s.tipo])bt[s.tipo]=[];bt[s.tipo].push(s);});
-  Object.keys(bt).sort().forEach(k=>{const t=getTipo(k),ss=bt[k],s=getStats(ss);doc.text(`• ${t.label}: ${s.count} ses, ${s.vol} min, RPE ${s.avgInt}, ${s.srpe} UA`,16,y);y+=4;});
-  y=Math.max(y+3,38+Object.keys(bt).length*4+8);
-  const sorted=[...sessions].sort((a,b)=>a.date.localeCompare(b.date));
-  doc.autoTable({
-    head:[['Fecha','Tipo','Vol','RPE','sRPE','Notas']],
-    body:sorted.map(s=>{const t=getTipo(s.tipo);const[y,m,d]=s.date.split('-');const f=parseDate(s.date);return[`${d}/${m} ${DAYS[f.getDay()]}`,t.label,`${s.volume}min`,s.intensity+'/10',srpe(s)+'UA',s.notes||'—'];}),
-    startY:y,theme:'grid',
-    styles:{font:'helvetica',fontSize:6.5,textColor:[209,213,219],fillColor:[22,22,42],lineColor:[55,55,75],lineWidth:0.2,cellPadding:{top:2,right:2,bottom:2,left:2}},
-    headStyles:{fillColor:[245,158,11],textColor:[0,0,0],fontStyle:'bold',fontSize:6.5},
-    alternateRowStyles:{fillColor:[26,26,46]},
-    columnStyles:{0:{cellWidth:18},1:{cellWidth:30},2:{cellWidth:13,halign:'center'},3:{cellWidth:11,halign:'center'},4:{cellWidth:15,halign:'center'},5:{cellWidth:'auto'}},
-    margin:{top:y,right:12,left:12},
-  });
-  const pc=doc.internal.getNumberOfPages();
-  for(let i=1;i<=pc;i++){doc.setPage(i);doc.setFontSize(6);doc.setTextColor(75,85,99);doc.text('diario-entrenamiento — '+new Date().toLocaleDateString('es-ES'),105,290,{align:'center'});}
-  doc.save('entrenamiento-historial-completo.pdf');
-}
-
-// ═══════════════════════════════════════════════
-// NAVIGATION + TAB SWITCHING
-// ═══════════════════════════════════════════════
-function prevMonth(){currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--;}renderCalendar();}
-function nextMonth(){currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++;}renderCalendar();}
-
-function switchTab(tab){
-  ['diarySection','measurementsSection','dashboardSection'].forEach(id=>document.getElementById(id).classList.add('hidden'));
-  ['navTabDiary','navTabMeasurements','navTabDashboard'].forEach(id=>document.getElementById(id).classList.remove('active','text-amber-400'));
-  document.getElementById(tab+'Section').classList.remove('hidden');
-  document.getElementById('navTab'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active','text-amber-400');
-  if(tab==='measurements')renderMeasurements();
-  if(tab==='dashboard')renderDashboard();
-  // Trigger chart resize for visible charts
-  window.dispatchEvent(new Event('resize'));
-}
-
-// ═══════════════════════════════════════════════
-// GOAL SETTING
-// ═══════════════════════════════════════════════
-function setupGoal(){
-  const box=document.getElementById('dashGoalValue');
-  box.style.cursor='pointer';
-  box.title='Click para cambiar objetivo semanal';
-  box.addEventListener('click',()=>{
-    const v=prompt('Objetivo semanal (minutos):',weeklyGoal);
-    if(v&&!isNaN(v)&&parseInt(v)>0){saveGoal(parseInt(v));renderDashboard();}
-  });
-}
-
-// ═══════════════════════════════════════════════
 // INIT
-// ═══════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded',()=>{
-  loadData();
-  const now=new Date();currentYear=now.getFullYear();currentMonth=now.getMonth();
-
-  // Nav tabs
-  document.getElementById('navTabDiary').addEventListener('click',()=>switchTab('diary'));
-  document.getElementById('navTabMeasurements').addEventListener('click',()=>switchTab('measurements'));
-  document.getElementById('navTabDashboard').addEventListener('click',()=>switchTab('dashboard'));
-
-  document.getElementById('prevMonth').addEventListener('click',prevMonth);
-  document.getElementById('nextMonth').addEventListener('click',nextMonth);
-  document.getElementById('btnNewSession').addEventListener('click',()=>openForm(todayStr()));
-  document.getElementById('btnExportPdf').addEventListener('click',exportPdf);
-  document.getElementById('btnExportAllPdf').addEventListener('click',exportAllPdf);
-  document.getElementById('btnExportCsv').addEventListener('click',exportCsv);
-  document.getElementById('btnNewMeasurement').addEventListener('click',openMeasForm);
-
-  document.getElementById('confirmDelete').addEventListener('click',executeDelete);
-  document.getElementById('confirmCancel').addEventListener('click',closeConfirm);
-  document.getElementById('confirmOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeConfirm();});
-
-  // Measurement form
-  document.getElementById('measForm').addEventListener('submit',e=>{
-    e.preventDefault();const fd=new FormData(e.target);
-    const m={id:Date.now().toString(36),date:fd.get('mdate'),weight:parseFloat(fd.get('weight'))||0,bodyFat:fd.get('bodyFat')?parseFloat(fd.get('bodyFat')):null,waist:fd.get('waist')?parseFloat(fd.get('waist')):null};
-    if(!m.weight)return;
-    measurements.push(m);saveMeasurements();closeMeasForm();renderMeasurements();
-  });
-
-  setupSearch();
-  setupGoal();
-  renderLegend();
-  renderCalendar();
-  renderDashboard();
-  switchTab('diary');
-});
+document.addEventListener('DOMContentLoaded',()=>{loadData();const n=new Date();currentYear=n.getFullYear();currentMonth=n.getMonth();
+  document.getElementById('navTabDiary').addEventListener('click',()=>switchTab('diary'));document.getElementById('navTabMeasurements').addEventListener('click',()=>switchTab('measurements'));document.getElementById('navTabDashboard').addEventListener('click',()=>switchTab('dashboard'));
+  document.getElementById('prevMonth').addEventListener('click',prevMonth);document.getElementById('nextMonth').addEventListener('click',nextMonth);document.getElementById('btnNewSession').addEventListener('click',()=>openForm(todayStr()));document.getElementById('btnExportPdf').addEventListener('click',exportPdf);document.getElementById('btnExportAllPdf').addEventListener('click',exportAllPdf);document.getElementById('btnExportCsv').addEventListener('click',exportCsv);document.getElementById('btnNewMeasurement').addEventListener('click',openMeasForm);
+  document.getElementById('confirmDelete').addEventListener('click',executeDelete);document.getElementById('confirmCancel').addEventListener('click',closeConfirm);document.getElementById('confirmOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeConfirm()});
+  document.getElementById('measForm').addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(e.target);const m={id:Date.now().toString(36),date:fd.get('mdate'),weight:parseFloat(fd.get('weight'))||0,bodyFat:fd.get('bodyFat')?parseFloat(fd.get('bodyFat')):null,waist:fd.get('waist')?parseFloat(fd.get('waist')):null};if(!m.weight)return;measurements.push(m);saveMeasurements();closeMeasForm();renderMeasurements()});
+  setupSearch();setupGoal();renderLegend();renderCalendar();renderDashboard();switchTab('diary')});
 </script>
 </body>
 </html>
