@@ -47,6 +47,7 @@
     .avatar-btn{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;cursor:pointer;transition:all .2s;border:2px solid transparent}
     .avatar-btn.active{border-color:#0071e3;background:rgba(0,113,227,.1)}
     .pain-dot{transition:all .2s;cursor:pointer}.pain-dot:hover{transform:scale(1.3)}
+    @keyframes pulse{0%{opacity:.4;transform:scale(1)}100%{opacity:0;transform:scale(2.5)}}
     @media print{body{background:#fff!important}.no-print{display:none!important}.ios-card{box-shadow:none!important;border:1px solid #ddd!important;break-inside:avoid}}
     @media(max-width:640px){
       /* Universal touch target: 44px minimum for all interactive */
@@ -307,7 +308,6 @@ const TIPOS=[
   {id:'recuperacion',label:'Recuperación activa',color:'#8e8e93',badge:'bg-gray-50 text-gray-500 border-gray-200'},
 ];
 const ZONES=['z1','z2','z3','z4','z5'];const ZLABELS=['Z1','Z2','Z3','Z4','Z5'];
-const BODY_PARTS=[{id:'neck',label:'Cuello',x:50,y:6},{id:'lshoulder',label:'Hombro izq',x:35,y:13},{id:'rshoulder',label:'Hombro der',x:65,y:13},{id:'chest',label:'Pecho',x:50,y:20},{id:'larm',label:'Brazo izq',x:30,y:22},{id:'rarm',label:'Brazo der',x:70,y:22},{id:'lforearm',label:'Antebrazo izq',x:32,y:30},{id:'rforearm',label:'Antebrazo der',x:68,y:30},{id:'abs',label:'Abdomen',x:50,y:32},{id:'lquad',label:'Cuádriceps izq',x:38,y:45},{id:'rquad',label:'Cuádriceps der',x:62,y:45},{id:'lhamstring',label:'Isquio izq',x:38,y:58},{id:'rhamstring',label:'Isquio der',x:62,y:58},{id:'lcalve',label:'Gemelo izq',x:40,y:70},{id:'rcalve',label:'Gemelo der',x:60,y:70}];
 
 let profiles=[],activeProfile=null,sessions=[],measurements=[],wellness=[],templates=[],mesocycles=[],weeklyGoal=300;
 let currentYear,currentMonth,editingId=null,filterTipo=null,filterTag=null;
@@ -542,20 +542,150 @@ function renderWellness(){
 }
 function renderPainMap(selected){
   const el=document.getElementById('painMap');
-  // SVG body outline
-  let svg=`<svg viewBox="0 0 100 85" width="260" style="max-width:100%"><rect x="25" y="2" width="50" height="17" rx="8" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
-    <rect x="18" y="8" width="15" height="30" rx="5" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
-    <rect x="67" y="8" width="15" height="30" rx="5" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
-    <rect x="30" y="18" width="40" height="18" rx="4" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
-    <rect x="22" y="36" width="56" height="14" rx="3" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
-    <rect x="28" y="50" width="18" height="18" rx="4" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
-    <rect x="54" y="50" width="18" height="18" rx="4" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
-    <rect x="30" y="68" width="14" height="15" rx="3" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>
-    <rect x="56" y="68" width="14" height="15" rx="3" fill="none" stroke="#d1d1d6" stroke-width="1.5"/>`;
-  BODY_PARTS.forEach(p=>{const isSel=selected&&selected.includes(p.id);svg+=`<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${isSel?'#ef4444':'#d1d1d6'}" stroke="${isSel?'#ef4444':'none'}" stroke-width="2" data-part="${p.id}" style="cursor:pointer" class="pain-dot"/>`});
-  svg+=`</svg>`;
+  const sel=selected||[];
+  const dpr=window.devicePixelRatio||1;const scale=Math.min(dpr,2);
+  const w=260*scale,h=480*scale;
+  // Define body parts with their SVG coordinates and labels
+  const parts=[
+    {id:'neck',label:'Cuello',cx:130,cy:43,cr:7},
+    {id:'lshoulder',label:'Hombro izq',cx:90,cy:65,cr:8},
+    {id:'rshoulder',label:'Hombro der',cx:170,cy:65,cr:8},
+    {id:'chest',label:'Pecho',cx:130,cy:95,cr:10},
+    {id:'larm',label:'Brazo izq',cx:67,cy:108,cr:7},
+    {id:'rarm',label:'Brazo der',cx:193,cy:108,cr:7},
+    {id:'lforearm',label:'Antebrazo izq',cx:63,cy:155,cr:6},
+    {id:'rforearm',label:'Antebrazo der',cx:197,cy:155,cr:6},
+    {id:'abs',label:'Abdomen',cx:130,cy:150,cr:9},
+    {id:'lquad',label:'Cuádriceps izq',cx:102,cy:225,cr:8},
+    {id:'rquad',label:'Cuádriceps der',cx:158,cy:225,cr:8},
+    {id:'lhamstring',label:'Isquio izq',cx:102,cy:300,cr:7},
+    {id:'rhamstring',label:'Isquio der',cx:158,cy:300,cr:7},
+    {id:'lcalve',label:'Gemelo izq',cx:105,cy:375,cr:6},
+    {id:'rcalve',label:'Gemelo der',cx:155,cy:375,cr:6},
+    {id:'lfoot',label:'Pie izq',cx:105,cy:430,cr:5},
+    {id:'rfoot',label:'Pie der',cx:155,cy:430,cr:5},
+  ];
+
+  // Build SVG with 3D body using gradients and proper paths
+  let svg=`<svg viewBox="0 0 260 480" width="${w}" height="${h*dpr}" style="max-width:260px;width:100%;height:auto;touch-action:manipulation">
+    <defs>
+      <linearGradient id="skinG" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#e8c5a0"/><stop offset="35%" stop-color="#f5dcc0"/><stop offset="50%" stop-color="#fae8d4"/><stop offset="65%" stop-color="#f5dcc0"/><stop offset="100%" stop-color="#e0b898"/>
+      </linearGradient>
+      <linearGradient id="skinG2" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#f5dcc0"/><stop offset="100%" stop-color="#e8c5a0"/>
+      </linearGradient>
+      <linearGradient id="armG" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#dbb594"/><stop offset="30%" stop-color="#f0d0b0"/><stop offset="60%" stop-color="#f5dcc0"/><stop offset="100%" stop-color="#dbb594"/>
+      </linearGradient>
+      <radialGradient id="glow" cx="50%" cy="30%" r="60%">
+        <stop offset="0%" stop-color="rgba(255,255,255,0.15)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+      </radialGradient>
+      <filter id="shadow"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.15"/></filter>
+      <filter id="innerShadow"><feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur"/><feOffset dx="0" dy="1"/><feComposite operator="out" in2="blur" result="shadow"/><feFlood flood-color="rgba(0,0,0,0.12)"/><feComposite operator="in" in2="shadow"/><feComposite operator="over" in2="SourceGraphic"/></filter>
+    </defs>
+    <!-- 3D Body Silhouette -->
+    <g filter="url(#shadow)">
+      <!-- Head -->
+      <ellipse cx="130" cy="25" rx="22" ry="24" fill="url(#skinG)" stroke="#c9a885" stroke-width="0.8"/>
+      <!-- Neck -->
+      <path d="M118 42 Q118 52 120 55 L140 55 Q142 52 142 42 Z" fill="url(#skinG2)" stroke="#c9a885" stroke-width="0.6"/>
+      <!-- Shoulders / Traps -->
+      <path d="M75 58 Q90 52 110 55 L113 55 Q115 65 115 70 L145 70 Q145 65 147 55 L150 55 Q170 52 185 58 L190 62 Q192 66 190 70 L177 72 Q155 66 130 66 Q105 66 83 72 L70 70 Q68 66 70 62 Z" fill="url(#skinG)" stroke="#c9a885" stroke-width="0.8"/>
+      <!-- Chest / Pectorals -->
+      <path d="M90 70 Q88 75 88 90 Q88 110 95 118 L105 120 Q110 112 115 105 Q120 100 130 100 Q140 100 145 105 Q150 112 155 120 L165 118 Q172 110 172 90 Q172 75 170 70 Z" fill="url(#skinG)" stroke="#c9a885" stroke-width="0.8"/>
+      <!-- Chest definition lines -->
+      <path d="M130 72 L130 100" fill="none" stroke="#dbb594" stroke-width="0.5" opacity="0.4"/>
+      <path d="M105 78 Q110 90 115 100" fill="none" stroke="#dbb594" stroke-width="0.5" opacity="0.3"/>
+      <path d="M155 78 Q150 90 145 100" fill="none" stroke="#dbb594" stroke-width="0.5" opacity="0.3"/>
+      <!-- Left Arm -->
+      <path d="M75 66 Q55 75 48 95 Q45 108 48 120 Q52 135 55 150 Q58 165 58 170 L52 172 Q48 168 42 155 Q38 140 38 120 Q38 95 50 72 Q60 58 75 66 Z" fill="url(#armG)" stroke="#c9a885" stroke-width="0.7"/>
+      <!-- Right Arm -->
+      <path d="M185 66 Q205 75 212 95 Q215 108 212 120 Q208 135 205 150 Q202 165 202 170 L208 172 Q212 168 218 155 Q222 140 222 120 Q222 95 210 72 Q200 58 185 66 Z" fill="url(#armG)" stroke="#c9a885" stroke-width="0.7"/>
+      <!-- Left Forearm -->
+      <path d="M58 170 Q56 180 55 195 Q55 210 58 220 L65 222 Q68 215 68 200 Q68 185 65 172 Z" fill="url(#armG)" stroke="#c9a885" stroke-width="0.7"/>
+      <!-- Right Forearm -->
+      <path d="M202 170 Q204 180 205 195 Q205 210 202 220 L195 222 Q192 215 192 200 Q192 185 195 172 Z" fill="url(#armG)" stroke="#c9a885" stroke-width="0.7"/>
+      <!-- Abs / Core -->
+      <path d="M95 118 L105 120 Q108 135 110 148 Q112 158 115 168 L145 168 Q148 158 150 148 Q152 135 155 120 L165 118 Q160 135 155 150 Q150 168 145 175 L115 175 Q110 168 105 150 Q100 135 95 118 Z" fill="url(#skinG2)" stroke="#c9a885" stroke-width="0.7"/>
+      <!-- Six-pack lines -->
+      <path d="M130 128 L130 172" fill="none" stroke="#dbb594" stroke-width="0.5" opacity="0.3"/>
+      <path d="M112 132 Q115 140 115 150" fill="none" stroke="#dbb594" stroke-width="0.5" opacity="0.25"/>
+      <path d="M148 132 Q145 140 145 150" fill="none" stroke="#dbb594" stroke-width="0.5" opacity="0.25"/>
+      <path d="M110 162 L150 162" fill="none" stroke="#dbb594" stroke-width="0.5" opacity="0.2"/>
+      <!-- Hip / Waist -->
+      <path d="M90 168 Q88 175 88 185 Q88 195 92 200 L168 200 Q172 195 172 185 Q172 175 170 168 Z" fill="url(#skinG)" stroke="#c9a885" stroke-width="0.7"/>
+      <!-- Left Quad -->
+      <path d="M92 200 Q88 210 85 230 Q82 250 84 265 L100 268 Q102 250 105 235 Q108 220 110 210 L115 200 Z" fill="url(#skinG2)" stroke="#c9a885" stroke-width="0.7"/>
+      <path d="M115 200 L120 205 Q118 220 115 230 L108 240 L100 240 Q105 225 110 210 Z" fill="url(#skinG2)" stroke="#c9a885" stroke-width="0.6"/>
+      <!-- Right Quad -->
+      <path d="M168 200 Q172 210 175 230 Q178 250 176 265 L160 268 Q158 250 155 235 Q152 220 150 210 L145 200 Z" fill="url(#skinG2)" stroke="#c9a885" stroke-width="0.7"/>
+      <path d="M145 200 L140 205 Q142 220 145 230 L152 240 L160 240 Q155 225 150 210 Z" fill="url(#skinG2)" stroke="#c9a885" stroke-width="0.6"/>
+      <!-- Left Knee -->
+      <ellipse cx="97" cy="272" rx="12" ry="6" fill="url(#skinG)" stroke="#c9a885" stroke-width="0.6"/>
+      <!-- Right Knee -->
+      <ellipse cx="163" cy="272" rx="12" ry="6" fill="url(#skinG)" stroke="#c9a885" stroke-width="0.6"/>
+      <!-- Left Calf -->
+      <path d="M84 278 Q80 300 78 330 Q77 355 80 370 L92 372 Q94 355 95 335 Q96 315 97 300 L100 278 Z" fill="url(#skinG2)" stroke="#c9a885" stroke-width="0.7"/>
+      <path d="M100 278 L103 285 Q102 310 100 335 L96 365 L90 365 Q93 340 95 315 Q97 295 100 278 Z" fill="url(#skinG2)" stroke="#c9a885" stroke-width="0.6"/>
+      <!-- Right Calf -->
+      <path d="M176 278 Q180 300 182 330 Q183 355 180 370 L168 372 Q166 355 165 335 Q164 315 163 300 L160 278 Z" fill="url(#skinG2)" stroke="#c9a885" stroke-width="0.7"/>
+      <path d="M160 278 L157 285 Q158 310 160 335 L164 365 L170 365 Q167 340 165 315 Q163 295 160 278 Z" fill="url(#skinG2)" stroke="#c9a885" stroke-width="0.6"/>
+      <!-- Left Ankle -->
+      <path d="M80 372 Q78 380 78 388 Q78 395 82 400 L95 400 Q96 395 94 388 Q93 380 92 372 Z" fill="url(#skinG)" stroke="#c9a885" stroke-width="0.6"/>
+      <!-- Right Ankle -->
+      <path d="M180 372 Q182 380 182 388 Q182 395 178 400 L165 400 Q164 395 166 388 Q167 380 168 372 Z" fill="url(#skinG)" stroke="#c9a885" stroke-width="0.6"/>
+      <!-- Left Foot -->
+      <path d="M78 400 Q72 408 68 415 Q65 422 70 428 Q78 432 88 432 Q95 432 100 428 Q105 422 100 415 Q96 408 95 400 Z" fill="url(#skinG2)" stroke="#c9a885" stroke-width="0.6"/>
+      <!-- Right Foot -->
+      <path d="M182 400 Q188 408 192 415 Q195 422 190 428 Q182 432 172 432 Q165 432 160 428 Q155 422 160 415 Q164 408 165 400 Z" fill="url(#skinG2)" stroke="#c9a885" stroke-width="0.6"/>
+    </g>
+    <!-- Glow overlay for 3D effect -->
+    <ellipse cx="130" cy="140" rx="50" ry="80" fill="url(#glow)" opacity="0.3"/>
+    <!-- Interactive pain dots -->
+    <g filter="url(#innerShadow)">`;
+  parts.forEach(p=>{
+    const isSel=sel.includes(p.id);
+    const dotColor=isSel?'#ef4444':'rgba(180,180,190,0.7)';
+    const dotSize=p.cr;
+    svg+=`<circle cx="${p.cx}" cy="${p.cy}" r="${dotSize}" fill="${dotColor}" stroke="${isSel?'#dc2626':'rgba(150,150,160,0.5)'}" stroke-width="${isSel?'0':'0.8'}" data-part="${p.id}" class="pain-dot" style="cursor:pointer;transition:all .2s;touch-action:manipulation" />`;
+    if(isSel){
+      svg+=`<circle cx="${p.cx}" cy="${p.cy}" r="${dotSize+3}" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.4" data-part="${p.id}" style="pointer-events:none;animation:pulse 1.5s infinite" />`;
+    }
+  });
+  svg+=`</g></svg>`;
   el.innerHTML=svg;
-  el.querySelectorAll('circle[data-part]').forEach(c=>{c.addEventListener('click',()=>{const id=c.dataset.part;c.setAttribute('fill',c.getAttribute('fill')==='#ef4444'?'#d1d1d6':'#ef4444');c.setAttribute('stroke',c.getAttribute('stroke')==='#ef4444'?'none':'#ef4444')})});
+  // Register click handlers
+  el.querySelectorAll('circle[data-part]').forEach(c=>{
+    c.addEventListener('click',function(e){
+      e.stopPropagation();
+      const id=this.dataset.part;
+      const isSel=this.getAttribute('fill')==='#ef4444';
+      this.setAttribute('fill',isSel?'rgba(180,180,190,0.7)':'#ef4444');
+      this.setAttribute('stroke',isSel?'rgba(150,150,160,0.5)':'#dc2626');
+      this.setAttribute('stroke-width',isSel?'0.8':'0');
+      // Toggle pulse ring
+      const existing=el.querySelector(`circle[data-part="${id}"]:not([fill="#ef4444"]):not([fill="rgba(180,180,190,0.7)"])`);
+      if(existing&&!isSel)existing.remove();
+      if(!isSel){
+        const pulse=document.createElementNS('http://www.w3.org/2000/svg','circle');
+        const parent=this.parentNode;
+        pulse.setAttribute('cx',this.getAttribute('cx'));
+        pulse.setAttribute('cy',this.getAttribute('cy'));
+        pulse.setAttribute('r',parseInt(this.getAttribute('r'))+3);
+        pulse.setAttribute('fill','none');
+        pulse.setAttribute('stroke','#ef4444');
+        pulse.setAttribute('stroke-width','2');
+        pulse.setAttribute('opacity','0.4');
+        pulse.dataset.part=id;
+        pulse.style.pointerEvents='none';
+        pulse.style.animation='pulse 1.5s infinite';
+        pulse.style.transformOrigin='center';
+        pulse.style.transformBox='fill-box';
+        parent.insertBefore(pulse,this.nextSibling);
+      }
+    });
+  });
 }
 function getPainSelections(){const el=document.getElementById('painMap');const selected=[];el.querySelectorAll('circle[data-part]').forEach(c=>{if(c.getAttribute('fill')==='#ef4444')selected.push(c.dataset.part)});return selected}
 
