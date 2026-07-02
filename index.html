@@ -531,17 +531,34 @@ function renderAcwr(){
 
 // ═══════════════════════════════════════════════ CALENDAR
 function renderCalendar(){
-  const g=document.getElementById('calendarGrid'),t=document.getElementById('monthTitle');t.textContent=MONTHS[currentMonth]+' '+currentYear;
+  console.log('renderCalendar ENTER',currentMonth,currentYear);
+  const g=document.getElementById('calendarGrid'),t=document.getElementById('monthTitle');
+  t.textContent=MONTHS[currentMonth]+' '+currentYear;
+  console.log('monthTitle set to:',t.textContent);
   const fd=new Date(currentYear,currentMonth,1);let sd=fd.getDay();sd=sd===0?6:sd-1;
   const dim=new Date(currentYear,currentMonth+1,0).getDate(),ms=sfM(currentYear,currentMonth),tod=todayStr();
+  console.log('dim:',dim,'ms count:',ms.length,'tod:',tod);
   const dm={};ms.forEach(s=>{const d=parseInt(s.date.split('-')[2],10);if(!dm[d])dm[d]=[];dm[d].push(s)});
   let h='';for(let i=0;i<sd;i++)h+='<div class="cal-cell bg-transparent"></div>';
   for(let d=1;d<=dim;d++){const ds=fmt(new Date(currentYear,currentMonth,d));const ss=dm[d]||[],hs=ss.length>0;
     let cl='cal-cell p-1 sm:p-1.5 flex flex-col justify-start bg-white border border-[#f2f2f7]';if(ds===tod)cl+=' today';if(hs)cl+=' has-session';
     let b='';if(hs){const sh=ss.slice(0,2),ex=ss.length-2;b='<div class="flex gap-0.5 mt-auto pt-0.5">'+sh.map(s=>`<span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full" style="background:${getTipo(s.tipo).color}"></span>`).join('')+(ex>0?`<span class="text-[7px] text-[#aeaeb2] ml-0.5">+${ex}</span>`:'')+'</div>'}
     h+=`<div class="${cl}" data-date="${ds}"><span class="day-num text-xs sm:text-sm font-medium ${ds===tod?'text-[#0071e3]':hs?'text-[#1c1c1e]':'text-[#aeaeb2]'}">${d}</span>${b}</div>`}
-  g.innerHTML=h;g.querySelectorAll('.cal-cell[data-date]').forEach(el=>{el.addEventListener('click',()=>{const d=el.dataset.date,ds=sessions.filter(s=>s.date===d);ds.length>0?showDayDetail(d,ds):openForm(d)})});
-  try{renderLegend()}catch(e){}try{renderSessionList()}catch(e){}try{renderStats()}catch(e){}try{updateStreak()}catch(e){}try{renderFilterChips()}catch(e){}try{renderChart()}catch(e){}try{renderWeeklyChart()}catch(e){}try{renderAcwr()}catch(e){}try{renderComparisonOpts()}catch(e){}try{renderWellness()}catch(e){}try{renderMeso()}catch(e){}
+  console.log('calendar HTML length:',h.length);
+  g.innerHTML=h;
+  console.log('calendarGrid innerHTML set, cells:',g.children.length);
+  try{renderLegend()}catch(e){console.error('renderLegend error',e)}
+  try{renderSessionList()}catch(e){console.error('renderSessionList error',e)}
+  try{renderStats()}catch(e){console.error('renderStats error',e)}
+  try{updateStreak()}catch(e){console.error('updateStreak error',e)}
+  try{renderFilterChips()}catch(e){console.error('renderFilterChips error',e)}
+  try{renderChart()}catch(e){console.error('renderChart error',e)}
+  try{renderWeeklyChart()}catch(e){console.error('renderWeeklyChart error',e)}
+  try{renderAcwr()}catch(e){console.error('renderAcwr error',e)}
+  try{renderComparisonOpts()}catch(e){console.error('renderComparisonOpts error',e)}
+  try{renderWellness()}catch(e){console.error('renderWellness error',e)}
+  try{renderMeso()}catch(e){console.error('renderMeso error',e)}
+  console.log('renderCalendar EXIT');
 }
 function renderLegend(){document.getElementById('legendRow').innerHTML=TIPOS.map(t=>`<span class="inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full" style="background:${t.color}"></span>${t.label}</span>`).join('')}
 
@@ -903,7 +920,7 @@ function exportAllPdf(){if(!sessions.length){toast('No hay sesiones para exporta
 
 // ═══════════════════════════════════════════════ NAV
 function prevMonth(){console.log('prevMonth called',currentMonth,currentYear);try{currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--}console.log('after prev',currentMonth,currentYear);renderCalendar()}catch(e){console.error('prevMonth error',e);renderCalendar()}}
-function nextMonth(){console.log('nextMonth called',currentMonth,currentYear);try{currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++}console.log('after next',currentMonth,currentYear);renderCalendar()}catch(e){console.error('nextMonth error',e);renderCalendar()}}
+function nextMonth(){console.log('nextMonth called',currentMonth,currentYear);try{currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++}console.log('after next',currentMonth,currentYear,MONTHS[currentMonth]);renderCalendar();console.log('renderCalendar done');document.getElementById('monthTitle').textContent}
 function switchTab(t){['diarySection','measSection','dashSection'].forEach(id=>document.getElementById(id).style.display='none');['navDiary','navMeas','navDash'].forEach(id=>{const el=document.getElementById(id);el.className='text-[.75rem] font-medium text-[#8e8e93] hover:text-[#3a3a3c] px-3 py-1.5'});document.getElementById(t+'Section').style.display='';const el=document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1));el.className='text-[.75rem] font-semibold text-[#0071e3] px-3 py-1.5';el.style.borderBottom='3px solid #0071e3';if(t==='meas')renderMeasurements();if(t==='dash')renderDashboard();window.dispatchEvent(new Event('resize'))}
 function setupGoal(){const b=document.getElementById('dashGoalValue');b.style.cursor='pointer';b.title='Click para cambiar objetivo';b.addEventListener('click',()=>{showPrompt('Objetivo semanal (min):',weeklyGoal,(v)=>{if(v&&!isNaN(v)&&parseInt(v)>0){saveGoal(parseInt(v));renderDashboard()}else{toast('Valor inválido')}})})}
 function fullRender(){renderLegend();renderCalendar();renderDashboard()}
